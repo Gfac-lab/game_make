@@ -1,0 +1,71 @@
+time	2026-11-18 03:13:51
+keep	lines	0	pinned	0
+briefword	first-person	shown	evidence/play.png
+checklist	L1	unlisted	-	Look: 밝은 플라스틱 장난감 블록 세상. 캐릭터는 사각 머리·몸통·팔다리의 블록 인형(봇마다 다른 원색 옷, 머리 위 "BOT" 이름표). 바닥은 매끈한 파스텔 크림 타일(은은한 체크), 미로 벽은 구역마다 다른 매끈한 파스텔 블록(하늘색·레몬·민트·코랄, 광장 기둥은 라일락) — 돌기·벽돌 줄눈 없는 매끈한 면, 레고 느낌 없음. 맑은 하늘색 배경. 무기도 각진 블록 장난감 형태. 시그니처: 피격 시 블록 파편, 처치 시 캐릭터가 블록 조각으로 흩어짐. every figure drawn, no emoji, no plain circles.	
+checklist	L2	unlisted	-	References: 로블록스 계열 블록 슈터(블록 인형과 캐주얼 분위기), Krunker(브라우저 안의 빠른 1인칭 아레나)	
+checklist	L3	unlisted	-	View: 3D · Camera: 1인칭(`first`), 마우스 직결 조준	
+checklist	F1	unlisted	-	1인칭 이동·조준·사격, 히트마커, 피격 방향 표시, 킬 사운드	
+checklist	F2	unlisted	-	무기 11종(기본: 라이플·권총·맨주먹·수류탄 / 해금: 스나이퍼·RPG·리볼버·우지·낫·칼·C4), 각자 다른 반동·섬광·소리, 탄창 HUD와 재장전, 4칸 로드아웃(주무기/보조/근접/투척)	
+checklist	F3	unlisted	-	개인전 20킬 경기, 실시간 점수판, 킬 피드, 매치 포인트, 종료 화면과 재대결	
+checklist	F4	unlisted	-	죽으면 로드아웃 선택 화면 → 리스폰(체력은 리스폰 때만 다시 참)	
+checklist	F5	unlisted	-	봇 7명: 난이도 3단계, 랜덤 무기, 미로 길찾기, 사람 같은 반응 지연 — 근접·중거리·원거리·폭발형 4가지로 다르게 공격	
+checklist	F6	unlisted	-	미로 맵 2종(좁은 미로 / 긴 복도가 있는 큰 미로), 둘 다 밝은 블록 테마	
+checklist	F7	unlisted	-	열쇠 보상과 무기고: 경기 후 지급, 시작 전 해금, 이 브라우저에 영구 저장	
+checklist	F8	unlisted	-	타이틀(난이도·맵·무기고·감도)과 태블릿 터치 조작	
+checklist	S1	unlisted	-	개인전 20킬 매치 · in the slice	
+checklist	S2	unlisted	-	봇 난이도 선택 · in the slice	
+checklist	S3	unlisted	-	열쇠 보상(경기 성적에 따라 지급) · in the slice	
+checklist	S4	unlisted	-	무기 해금 상점(열쇠로 영구 해금) · in the slice	
+checklist	S5	unlisted	-	봇 랜덤 무기 · in the slice	
+checklist	S6	unlisted	-	맵 2종(좁은/큰) 선택 · in the slice	
+checklist	S7	unlisted	-	리스폰 전 무기 선택 · in the slice	
+checklist	S8	unlisted	-	태블릿 터치 조작 · in the slice	
+checklist	M1	unlisted	-	타이틀에서 봇 난이도(쉬움/보통/어려움)와 맵(좁은 미로/큰 미로)을 고르고, 무기고에서 보유 열쇠와 잠긴 무기를 본 뒤 4칸 로드아웃을 확인하고 시작한다.	
+checklist	M2	unlisted	-	미로 한쪽에서 라이플을 들고 스폰하며, 짧은 조작 안내가 3초간 떴다 사라진다(태블릿은 터치 버튼 안내).	
+checklist	M3	unlisted	-	30초 안에 첫 봇과 마주치고, 히트마커가 "틱", 킬 시 봇이 블록 조각으로 터진다.	
+checklist	M4	unlisted	-	처음 죽으면 로드아웃 화면이 뜨고, 다른 무기로 바꿔 다시 들어가는 순간 이 게임의 리듬을 안다.	
+checklist	C1	unlisted	-	첫 30초 안에 봇과 교전.	
+checklist	C2	unlisted	-	봇은 사람처럼 0.3~0.6초 늦게 반응하고 가끔 빗맞히며 벽 너머를 못 본다.	
+checklist	C3	unlisted	-	어려움 봇은 더 빠르고 정확하다.	
+checklist	C4	unlisted	-	죽으면 무기를 고르고(최소 3초) 나를 죽인 적과 먼 곳에서 리스폰.	
+checklist	C5	unlisted	-	픽업도 자동 회복도 없으므로 한 목숨의 체력 100이 전부다 — 리스폰해야 다시 찬다.	
+checklist	C6	unlisted	-	누군가 19킬이면 "매치 포인트".	
+checklist	C7	unlisted	-	봇은 처음부터 랜덤 무기(RPG·스나이퍼 포함)를 든다.	
+checklist	C8	unlisted	-	*(inferred (strong))*	
+webgl	ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)
+browser	HeadlessChrome/153.0.0.0
+console	play	1074	[.WebGL-0x184c001b7000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+console	play	1076	[.WebGL-0x184c001b7000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+scene	play	0	title
+scene	play	1	play
+digits	log	800 28px "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "WenQuanYi Zen Hei", system-ui, sans-serif	tabular	0
+digits	log	bold 17px "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "WenQuanYi Zen Hei", system-ui, sans-serif	tabular	0
+digits	log	800 16px "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "WenQuanYi Zen Hei", system-ui, sans-serif	tabular	0
+digits	log	800 34px "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "WenQuanYi Zen Hei", system-ui, sans-serif	tabular	0
+digits	log	800 13px "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "WenQuanYi Zen Hei", system-ui, sans-serif	tabular	0
+digits	log	800 32px "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "WenQuanYi Zen Hei", system-ui, sans-serif	tabular	0
+digits	log	bold 15px "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "WenQuanYi Zen Hei", system-ui, sans-serif	tabular	0
+digits	log	bold 19px "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "WenQuanYi Zen Hei", system-ui, sans-serif	tabular	0
+measure	step-time	play	0.067	4.400	396
+lane	play	stop	6.6	1210
+console	play	0	[.WebGL-0x184c001b7000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+console	play	0	[.WebGL-0x184c001b7000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+uncaught	play	0
+text	play	canvas	560,26,722,54	39.0	12.47	inside	내 킬  0 / 20
+text	play	canvas	571,66,708,82	24.0	3.67	inside	1등 BOT 포도  1킬
+text	play	canvas	756,19,790,32	24.0	11.81	inside	0:06
+text	play	canvas	1188,17,1256,34	24.0	5.10	inside	BOT 코랄
+text	play	canvas	1042,18,1111,32	24.0	3.43	inside	BOT 포도
+text	play	canvas	78,652,137,678	48.0	13.93	inside	100
+text	play	canvas	154,681,254,695	19.5	3.05	inside	체력 (회복 없음)
+text	play	canvas	936,600,944,611	19.5	3.05	inside	1
+text	play	canvas	1020,600,1028,611	19.5	9.63	inside	2
+text	play	canvas	1104,600,1112,611	19.5	3.05	inside	3
+text	play	canvas	1188,600,1196,611	19.5	3.05	inside	4
+text	play	canvas	1065,651,1099,668	25.5	3.05	inside	권총
+text	play	canvas	1144,675,1241,704	45.0	9.62	inside	12 / ∞
+text	play	canvas	1064,683,1146,698	21.0	3.05	inside	G 수류탄 ×2
+text	play	canvas	423,251,856,269	25.5	7.37	inside	화면을 클릭하면 마우스로 조준해요 (방향키로도 회전)
+screen	play	drawn
+shot	play	prototypes/block-maze-brawl/evidence/play.png
+responds	changed	4

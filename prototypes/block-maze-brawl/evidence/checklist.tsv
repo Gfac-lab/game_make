@@ -1,0 +1,31 @@
+L1	pass	evidence/play.png	매끈한 파스텔 벽·크림 타일 바닥·하늘색 배경, 블록 인형 봇과 블록 무기(figures.png), 처치 시 블록 파편 js/sim.js:370
+L2	pass	evidence/figures.png	블록 인형 캐릭터와 캐주얼한 밝은 색, 빠른 1인칭 아레나 흐름
+L3	pass	evidence/play.png	3D 1인칭 카메라 js/render.js:134, 포인터 락 마우스 직결 조준 js/ui.js:203
+F1	pass	js/sim.js	이동·조준·사격(play.png), 히트마커 js/sim.js:353, 피격 방향 js/sim.js:350, 킬 사운드 js/sim.js:372(소리 자체는 들어보지 못함) (js/sim.js:353)
+F2	pass	evidence/title.png	무기 11종이 무기고에 있고 기본 4종 보유 표시; 탄창 HUD js/hud.js:204, 재장전 js/sim.js:199, 4칸 로드아웃 슬롯(play.png)
+F3	pass	js/sim.js	20킬 승리 js/sim.js:376, 점수판(Tab) js/hud.js:227, 킬 피드(play.png 오른쪽 위), 매치 포인트 js/sim.js:382, 결과·재대결 js/ui.js:130 — 경기 종료까지 실제로 플레이해 보진 않음 (js/sim.js:382)
+F4	pass	js/ui.js	사망 시 로드아웃 화면 표시 js/ui.js:161, 출전 버튼 js/ui.js:187, 체력은 spawn에서만 채움 js/sim.js:81 — 화면은 코드로만 확인 (js/ui.js:161)
+F5	pass	js/sim.js	봇 7명(config bot_count), 난이도별 반응·조준·회전 config.js:41-50, 랜덤 무기 js/sim.js:85, BFS 길찾기, 무기별 선호 거리(근접·근거리·중거리·원거리·폭발) (js/sim.js:495)
+F6	pass	evidence/title.png	타이틀의 맵 미리보기 두 장: 좁은 미로와 긴 복도가 있는 큰 미로 js/world.js:150, touch-play.png가 큰 미로
+F7	pass	js/sim.js	경기 후 열쇠 지급 js/sim.js:657, 무기고 해금 js/data.js:89, localStorage 저장 js/data.js:85 (js/sim.js:657)
+F8	pass	evidence/touch-play.png	타이틀(title.png: 난이도·맵·무기고·감도)과 터치 스틱·버튼(touch-play.png)
+S1	pass	js/sim.js	kill_target 20 도달 시 경기 종료 (js/sim.js:376)
+S2	pass	evidence/title.png	쉬움/보통/어려움 버튼
+S3	pass	js/sim.js	킬당 열쇠 + 순위 보너스 (js/sim.js:650)
+S4	pass	evidence/title.png	무기고 카드에 열쇠 가격과 해금 버튼, js/data.js:89
+S5	pass	js/sim.js	리스폰마다 4칸 모두 랜덤, 주로 쓰는 칸도 랜덤 (js/sim.js:85)
+S6	pass	evidence/title.png	좁은 미로/큰 미로 선택 버튼
+S7	pass	js/ui.js	사망 화면에서 해금한 무기만 고르는 로드아웃 js/ui.js:73 (js/ui.js:161)
+S8	pass	evidence/touch-play.png	왼쪽 스틱, 오른쪽 드래그 조준, 발사·점프·재장전·줌·무기 교체·투척 버튼 — 실제 태블릿에서는 확인하지 않음
+M1	pass	evidence/title.png	난이도·맵·무기고(열쇠 0개, 잠긴 무기 가격)·4칸 로드아웃이 한 화면
+M2	pass	evidence/play.png	라이플로 스폰 js/sim.js:101, 조작 안내 4.5초 js/hud.js:113, 태블릿은 터치 안내
+M3	not_assessed	js/sim.js	히트마커·블록 파편은 코드에 있음; '30초 안에 마주침'은 플레이해야 알 수 있음 (js/sim.js:353)
+M4	pass	js/ui.js	첫 사망 시 로드아웃 화면이 뜨고 바꾼 무기로 리스폰; '리듬을 안다'는 플레이로 판단 (js/ui.js:161)
+C1	not_assessed	evidence/play.png	6초 시점 이미 봇끼리 킬 발생(킬 피드); 내가 30초 안에 교전하는지는 플레이로 확인 필요
+C2	pass	config.js:45	반응 0.27~0.6초 config.js:41-46, 조준 오차, 벽 너머 못 봄 js/sim.js:475
+C3	pass	config.js:45	어려움: 반응 0.27초·오차 1.9°·회전 7.5 rad/s, 머리 조준 섞음
+C4	pass	js/sim.js	최소 3초 대기(respawn_min) 후 출전, 죽인 적과 먼 곳 가중치 js/sim.js:70 (js/sim.js:70)
+C5	pass	js/hud.js	픽업 없음, 자동 회복 없음; 체력은 spawn에서만 100으로 js/sim.js:81, HUD에 '회복 없음' (js/hud.js:193)
+C6	pass	js/sim.js	19킬 시 매치 포인트 배너와 효과음 (js/sim.js:382)
+C7	pass	js/sim.js	봇이 RPG·스나이퍼 포함 랜덤 무기로 스폰(figures.png에 모두) (js/sim.js:85)
+C8	not_assessed	-	기획서의 표시(inferred) 꼬리표일 뿐 게임 문장이 아님

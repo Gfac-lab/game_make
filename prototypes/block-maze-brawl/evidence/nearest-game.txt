@@ -1,0 +1,1 @@
+Nearest game: Krunker (브라우저 1인칭 FFA); this one differs in 미로 맵 + 봇 전용 대전 + 킬로 버는 열쇠로 무기를 영구 해금하고 죽을 때마다 4칸 로드아웃을 다시 고르는 진행 구조, 매끈한 파스텔 블록 인형 룩

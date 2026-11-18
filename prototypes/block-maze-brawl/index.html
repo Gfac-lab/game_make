@@ -1,0 +1,340 @@
+<!doctype html>
+<!-- PROTOTYPE - NOT FOR PRODUCTION -->
+<!-- Question: 미로에서 매번 다른 무기를 든 봇들과 벌이는 빠른 개인전이 재밌고, 열쇠 해금과 로드아웃이 한 판 더를 부르는가? -->
+<!-- Date: 2026-11-18 -->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>블록 미로 대난투</title>
+<style>
+  :root {
+    --sky: #4cb8f0; --lemon: #ffd23f; --mint: #33d1a0; --coral: #ff7262; --lilac: #a98cf5;
+    --ink: #1b2140; --panel: rgba(255,255,255,0.94); --shadow: rgba(20,30,70,0.25);
+    --font: "Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","WenQuanYi Zen Hei",system-ui,sans-serif;
+  }
+  html, body { margin: 0; height: 100%; background: #bfe6ff; overflow: hidden; font-family: var(--font);
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; }
+  body { font-variant-numeric: tabular-nums; color: var(--ink); }
+  canvas { display: block; }
+  #gl { position: fixed; left: 0; top: 0; }
+  #game { position: fixed; left: 0; top: 0; pointer-events: none; }
+  .screen { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; overflow: auto; }
+  .screen.show { display: flex; }
+  .screen.dim { background: rgba(20,30,70,0.45); }
+  button { font-family: var(--font); cursor: pointer; }
+  /* Toy-brick buttons: chunky, with a darker bottom edge. */
+  .big { display: block; width: 100%; margin-top: 14px; padding: 14px 18px; font-size: 22px; font-weight: 900; color: #fff;
+    background: var(--coral); border: 0; border-radius: 12px; box-shadow: 0 6px 0 #c4483b; letter-spacing: 1px; }
+  .big:active { transform: translateY(4px); box-shadow: 0 2px 0 #c4483b; }
+  .big:disabled { background: #9aa3bd; box-shadow: 0 6px 0 #6f7891; cursor: default; }
+  .plain { display: block; width: 100%; margin-top: 10px; padding: 11px; font-size: 17px; font-weight: 800; color: var(--ink);
+    background: #eef3ff; border: 0; border-radius: 10px; box-shadow: 0 4px 0 #c7d1ea; }
+  .card, .panel { background: var(--panel); border-radius: 18px; box-shadow: 0 10px 0 var(--shadow); padding: 18px 20px; }
+  .panel { max-width: 860px; width: calc(100% - 40px); }
+  h2 { margin: 12px 0 8px; font-size: 18px; font-weight: 900; }
+  /* Title */
+  .menu-inner { width: min(1180px, calc(100% - 28px)); padding: 18px 0; margin: auto; }
+  .logo { margin: 0; text-align: center; font-size: clamp(38px, 6vw, 68px); font-weight: 900; color: #fff; letter-spacing: 2px;
+    text-shadow: 0 4px 0 #2f7bf5, 0 8px 0 #1e3a6e, 0 12px 18px rgba(0,0,0,0.25); }
+  .logo span { color: var(--lemon); text-shadow: 0 4px 0 #e0a800, 0 8px 0 #8a6200, 0 12px 18px rgba(0,0,0,0.25); }
+  .sub { text-align: center; font-size: 18px; font-weight: 800; color: #1e3a6e; margin: 10px 0 16px; }
+  .cols { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  .cols > .card { flex: 1 1 300px; }
+  .cols > .card.wide { flex: 2 1 520px; }
+  .seg { display: flex; gap: 8px; }
+  .seg-b { flex: 1; padding: 11px 6px; font-size: 18px; font-weight: 900; border: 0; border-radius: 10px; background: #eef3ff; color: var(--ink); box-shadow: 0 4px 0 #c7d1ea; }
+  .seg-b.on { background: var(--sky); color: #fff; box-shadow: 0 4px 0 #2a86bd; }
+  .maps { display: flex; gap: 10px; }
+  .map-b { flex: 1; padding: 8px; border: 0; border-radius: 12px; background: #eef3ff; box-shadow: 0 4px 0 #c7d1ea; color: var(--ink); }
+  .map-b canvas { margin: 0 auto 4px; border-radius: 6px; }
+  .map-b.on { background: var(--mint); color: #fff; box-shadow: 0 4px 0 #1f9a74; }
+  .map-n { font-weight: 900; font-size: 17px; } .map-d { font-size: 14px; font-weight: 700; opacity: 0.85; }
+  input[type=range] { width: 100%; accent-color: var(--sky); height: 28px; }
+  .controls { margin-top: 12px; font-size: 14px; line-height: 1.6; font-weight: 700; color: #3a4470; }
+  .armhead { display: flex; align-items: center; justify-content: space-between; }
+  .keys { display: flex; align-items: center; font-weight: 900; font-size: 19px; background: #fff6d6; border-radius: 10px; padding: 4px 12px; }
+  .arm { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+  .wcard { background: #f1f4fb; border-radius: 12px; padding: 8px 6px; text-align: center; box-shadow: 0 3px 0 #d6ddee; }
+  .wcard.owned { background: #e8fff4; box-shadow: 0 3px 0 #b6ead2; }
+  .wcard canvas { margin: 0 auto; }
+  .wname { font-weight: 900; font-size: 16px; } .wslot { font-size: 14px; color: #6a7396; font-weight: 700; }
+  .wown { margin-top: 4px; font-size: 14px; font-weight: 900; color: #1f9a74; }
+  .buy { margin-top: 4px; display: inline-flex; align-items: center; gap: 2px; padding: 5px 10px; font-size: 15px; font-weight: 900; border: 0; border-radius: 8px;
+    background: var(--lemon); color: #3a2a00; box-shadow: 0 3px 0 #c9a100; }
+  .buy.poor { background: #e4e7f0; color: #7a8099; box-shadow: 0 3px 0 #c3c8d6; }
+  .loadout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .lcol { display: flex; flex-direction: column; gap: 6px; }
+  .lhead { font-weight: 900; font-size: 15px; color: #3a4470; }
+  .chip { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border: 0; border-radius: 10px; background: #eef3ff; box-shadow: 0 3px 0 #c7d1ea;
+    font-size: 15px; font-weight: 800; color: var(--ink); text-align: left; }
+  .chip.on { background: var(--lemon); box-shadow: 0 3px 0 #c9a100; }
+  .chip.locked { opacity: 0.6; }
+  #msg { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: #fff; font-weight: 800; font-size: 17px;
+    padding: 10px 18px; border-radius: 12px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 30; }
+  #msg.show { opacity: 1; }
+  /* Death, pause, results */
+  #death .panel h2, #results h2, #pause h2 { font-size: 28px; text-align: center; margin-top: 4px; }
+  #death .panel { max-width: 760px; }
+  #death .hint { text-align: center; margin-top: 8px; font-weight: 700; color: #3a4470; font-size: 15px; }
+  #resTitle.win { color: #1f9a74; }
+  table { width: 100%; border-collapse: collapse; font-size: 17px; font-weight: 800; }
+  th { text-align: left; font-size: 14px; color: #6a7396; padding: 4px 8px; }
+  td { padding: 5px 8px; border-top: 2px solid #eef1f8; }
+  tr.me td { background: #fff3c4; }
+  td.nm { display: flex; align-items: center; gap: 8px; } .sw { display: inline-block; width: 16px; height: 16px; border-radius: 3px; }
+  #resKeys { display: flex; align-items: center; justify-content: center; margin-top: 12px; font-weight: 900; }
+  #resKeys .big { all: unset; font-size: 30px; font-weight: 900; color: #c08a00; }
+  #resKeys .small { font-size: 15px; color: #3a4470; margin-left: 6px; }
+  #resNext { text-align: center; font-weight: 800; color: #2f7bf5; margin-top: 6px; font-size: 16px; }
+  .row2 { display: flex; gap: 10px; } .row2 > * { flex: 1; }
+  label { display: block; font-weight: 800; margin-top: 10px; font-size: 16px; }
+  /* Touch controls */
+  #touch { position: fixed; inset: 0; display: none; touch-action: none; }
+  #touch.show { display: block; }
+  #stick { position: absolute; left: 70px; bottom: 70px; width: 150px; height: 150px; border-radius: 50%;
+    background: rgba(255,255,255,0.18); border: 4px solid rgba(255,255,255,0.55); pointer-events: none; }
+  #stick.on { bottom: auto; }
+  #knob { position: absolute; left: 45px; top: 45px; width: 60px; height: 60px; border-radius: 16px; background: rgba(255,255,255,0.8); box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
+  .tb { position: absolute; border: 0; border-radius: 18px; font-size: 17px; font-weight: 900; color: #fff; background: rgba(30,40,80,0.5);
+    border: 3px solid rgba(255,255,255,0.6); touch-action: none; }
+  .tb.on { background: rgba(76,184,240,0.85); }
+  #tFire { right: 40px; bottom: 120px; width: 118px; height: 118px; border-radius: 30px; background: rgba(255,114,98,0.8); font-size: 22px; }
+  #tJump { right: 176px; bottom: 40px; width: 82px; height: 70px; }
+  #tReload { right: 176px; bottom: 132px; width: 82px; height: 60px; }
+  #tZoom { right: 176px; bottom: 214px; width: 82px; height: 60px; }
+  #tSwap { right: 40px; bottom: 256px; width: 118px; height: 60px; background: rgba(255,210,63,0.75); color: #3a2a00; }
+  #tThrow { right: 40px; bottom: 40px; width: 118px; height: 66px; background: rgba(51,209,160,0.8); }
+  #tBoard { left: 16px; top: 16px; width: 74px; height: 50px; }
+  #tPause { left: 98px; top: 16px; width: 92px; height: 50px; }
+  @media (max-width: 760px) { .loadout { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="game"></canvas>
+
+<div id="menu" class="screen">
+  <div class="menu-inner">
+    <h1 class="logo">블록 미로 <span>대난투</span></h1>
+    <div class="sub">봇과 1인칭 개인전 — 먼저 <b id="killT">20</b>킬 하면 승리!</div>
+    <div class="cols">
+      <div class="card">
+        <h2>봇 난이도</h2><div class="seg" id="diffSeg"></div>
+        <h2>맵</h2><div class="maps" id="mapSel"></div>
+        <h2>마우스 감도</h2><input type="range" id="sens" min="0.2" max="3" step="0.05">
+        <button class="big" id="startBtn">경기 시작 (Enter)</button>
+        <div class="controls">WASD 이동 · 마우스 조준 · 클릭 공격 · 우클릭 줌 · Space 점프 · Shift 질주<br>
+          1~4 무기 · G 투척(C4는 한 번 더 눌러 기폭) · R 재장전 · Tab 점수판 · P 일시정지 · M 소리<br>
+          태블릿: 왼쪽 스틱 이동 · 오른쪽 드래그 조준 · 화면 버튼</div>
+      </div>
+      <div class="card wide">
+        <div class="armhead"><h2>무기고 — 열쇠로 해금하면 계속 사용</h2><div class="keys" id="keysTitle"></div></div>
+        <div class="arm" id="armory"></div>
+        <h2>로드아웃 (해금한 무기만)</h2>
+        <div class="loadout" id="loadTitle"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="death" class="screen dim">
+  <div class="panel">
+    <h2 id="deathTitle">당했다</h2>
+    <div class="sub">리스폰 전에 무기를 고르세요</div>
+    <div class="loadout" id="loadDeath"></div>
+    <button class="big" id="spawnBtn">출전</button>
+    <div class="hint" id="spawnHint"></div>
+  </div>
+</div>
+
+<div id="pause" class="screen dim">
+  <div class="panel" style="max-width:420px">
+    <h2>일시정지</h2>
+    <label>마우스 감도 <input type="range" id="sensP" min="0.2" max="3" step="0.05"></label>
+    <label>터치 감도 <input type="range" id="tsensP" min="0.2" max="3" step="0.05"></label>
+    <button class="big" id="resumeBtn">계속 (P)</button>
+    <button class="plain" id="muteBtn">소리 끄기 (M)</button>
+    <button class="plain" id="quitBtn">경기 포기하고 타이틀로</button>
+  </div>
+</div>
+
+<div id="results" class="screen dim">
+  <div class="panel" style="max-width:560px">
+    <h2 id="resTitle"></h2>
+    <table id="resTable"></table>
+    <div id="resKeys"></div>
+    <div id="resNext"></div>
+    <div class="row2"><button class="big" id="againBtn">재대결 (Enter)</button></div>
+    <button class="plain" id="armoryBtn">무기고 · 타이틀로 (Esc)</button>
+  </div>
+</div>
+
+<div id="touch">
+  <div id="stick"><div id="knob"></div></div>
+  <button class="tb" id="tFire">발사</button>
+  <button class="tb" id="tJump">점프</button>
+  <button class="tb" id="tReload">재장전</button>
+  <button class="tb" id="tZoom">줌</button>
+  <button class="tb" id="tSwap">무기 교체</button>
+  <button class="tb" id="tThrow">투척</button>
+  <button class="tb" id="tBoard">점수</button>
+  <button class="tb" id="tPause">일시정지</button>
+</div>
+<div id="msg"></div>
+
+<script src="vendor/three.js"></script>
+<script src="config.js"></script>
+<script>
+'use strict';
+// ---- Built to be checked ----------------------------------------------------------------
+const params = new URLSearchParams(location.search);
+const tune = new Proxy({}, { get: (_, k) => CONFIG[k].value }); // live: tune.speed is CONFIG.speed.value
+const STEP = 1 / 60;            // simulation step in seconds; motion is per second, never per frame
+let W = 1280, H = 720;          // logical HUD size: 720 tall, as wide as the window's shape
+const PIXEL = false;
+const FONT = '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","WenQuanYi Zen Hei",system-ui,sans-serif';
+const TITLE = '블록 미로 대난투';
+const clock = window.GAME_CLOCK || { now: () => performance.now() / 1000 }; // a check may inject one
+const CHEAP = params.get('render') === 'cheap'; // a headless shot or check: 3D draws cheap; players never see it
+let seed;
+function rng() { // mulberry32; every gameplay random call reads this, never Math.random
+  seed = (seed + 0x6D2B79F5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), seed | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+const events = []; // window.game.events: anything the game wants a run to see
+
+// ---- Screen: the HUD canvas fills the window over the 3D view ------------------------------
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+function fit() {
+  H = 720; W = Math.max(720, H * innerWidth / innerHeight);
+  const s = innerHeight / H, r = s * (devicePixelRatio || 1);
+  canvas.width = Math.round(W * r); canvas.height = Math.round(H * r);
+  canvas.style.width = innerWidth + 'px'; canvas.style.height = innerHeight + 'px';
+  ctx.setTransform(r, 0, 0, r, 0, 0);
+}
+addEventListener('resize', fit); fit();
+function clear(c) { ctx.fillStyle = c; ctx.fillRect(0, 0, W, H); }
+function text(s, x, y, size, c, align = 'center') {
+  ctx.fillStyle = c; ctx.font = `${size}px ${FONT}`; ctx.textAlign = align;
+  ctx.textBaseline = 'middle'; ctx.fillText(s, x, y);
+}
+
+// ---- Input: keys by position (event.code), OS key repeat ignored ------------------------
+const down = new Set(), hit = new Set();
+const pressed = code => hit.has(code); // true for one step after the key goes down
+addEventListener('keydown', e => {
+  startAudio();
+  if (!e.repeat) { down.add(e.code); hit.add(e.code); }
+  if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+});
+addEventListener('keyup', e => down.delete(e.code));
+addEventListener('pointerdown', () => startAudio());
+addEventListener('blur', () => down.clear());
+
+// ---- Audio: started on first input, mute on M --------------------------------------------
+let audio = null, muted = false;
+function startAudio() {
+  if (!audio) {
+    const ac = window.GAME_AUDIO || new (window.AudioContext || window.webkitAudioContext)(); // a check may inject one
+    const out = ac.createGain(); out.gain.value = muted ? 0 : tune.volume;
+    out.connect(ac.destination); audio = { ac, out };
+  }
+  if (audio.ac.state === 'suspended') audio.ac.resume();
+}
+function setMuted(m) { muted = m; if (audio) audio.out.gain.value = m ? 0 : tune.volume; }
+addEventListener('tune', () => setMuted(muted));
+let scene, state;
+</script>
+<script src="js/data.js"></script>
+<script src="js/world.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/render.js"></script>
+<script src="js/hud.js"></script>
+<script src="js/ui.js"></script>
+<script>
+'use strict';
+// ---- Scenes: title, play (your death's loadout screen lives inside it), pause, results, figures
+function reset() {
+  seed = Number(params.get('seed')) || CONFIG.seed;
+  newMatch();
+  // What a run reads: plain numbers from the match (M holds the full match with its 3D parts).
+  state = {
+    get t() { return M.t; }, get score() { return M.player.kills; }, get kills() { return M.player.kills; },
+    get deaths() { return M.player.deaths; }, get hp() { return Math.ceil(M.player.hp); }, get alive() { return M.player.alive; },
+    get weapon() { return curW(M.player); }, get bots_alive() { return M.actors.filter(a => !a.isPlayer && a.alive).length; },
+    get leader() { return M.actors.slice().sort((a, b) => b.kills - a.kills)[0].name; },
+    get over() { return M.over; }, get winner() { return M.winner ? M.winner.name : null; }, get gained() { return M.gained; },
+    get keys() { return save.keys; }, get map() { return M.map; }, get difficulty() { return M.diff; },
+  };
+}
+const scenes = {
+  figures: { update() {}, draw() { renderWorld(1); drawHUD(); } },
+  title: {
+    update(dt) { if (pressed('Enter') || pressed('Space')) startMatch(); },
+    draw() { renderWorld(1); drawHUD(); },
+  },
+  play: {
+    update(dt) {
+      const p = M.player;
+      if ((pressed('KeyP') || pressed('Escape')) && p.alive && !M.over) { scene = 'pause'; unlockPointer(); return; }
+      if (!p.alive && !M.over && (pressed('Space') || pressed('Enter'))) { respawnPlayer(); if (p.alive) lockPointer(); }
+      matchStep(dt);
+      if (M.over && M.endT <= 0) { unlockPointer(); scene = 'results'; renderResults(); }
+    },
+    draw() { renderWorld(ALPHA); drawHUD(); },
+  },
+  pause: {
+    update() { if (pressed('KeyP') || pressed('Escape')) { scene = 'play'; lockPointer(); } },
+    draw() { renderWorld(1); drawHUD(); },
+  },
+  results: {
+    update() { if (pressed('Enter')) startMatch(); else if (pressed('Escape')) toTitle(); },
+    draw() { renderWorld(1); drawHUD(); },
+  },
+};
+
+// ---- Loop: fixed step, frame time clamped ---------------------------------------------
+function step() {
+  if (pressed('KeyM')) { setMuted(!muted); hit.delete('KeyM'); }
+  scenes[scene].update(STEP); hit.clear();
+}
+let last, acc = 0, ALPHA = 1; // ALPHA: how far the frame is between the last two steps
+function tick() {
+  const now = clock.now();
+  acc += Math.min(now - last, 0.25); last = now; // a stall never fast-forwards the game
+  while (acc >= STEP) { step(); acc -= STEP; }
+  ALPHA = acc / STEP;
+  drawFrame();
+}
+function drawFrame() { scenes[scene].draw(); syncDom(); }
+function frame() { tick(); requestAnimationFrame(frame); }
+function timer() { if (document.visibilityState === 'visible' && clock.now() - last > 0.1) tick(); }
+
+// ---- What a check can read and drive (?manual=1 stops the loop; players never see it) ----
+window.game = {
+  get scene() { return scene; },
+  get state() { return state; },
+  press(code) { hit.add(code); },
+  hold(code, on) { on ? down.add(code) : down.delete(code); },
+  get events() { return events; },
+  step(n = 1, draw = true, alpha = 1) {
+    for (let i = 0; i < n; i++) step();
+    if (draw) { ALPHA = alpha; drawFrame(); }
+  },
+};
+
+document.getElementById('killT').textContent = tune.kill_target;
+reset();
+scene = params.get('scene') || 'title';
+last = clock.now();
+if (params.get('manual') === '1') drawFrame();
+else { requestAnimationFrame(frame); setInterval(timer, 50); }
+</script>
+</body>
+</html>
