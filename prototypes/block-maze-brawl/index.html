@@ -20,7 +20,7 @@
   canvas { display: block; }
   #gl { position: fixed; left: 0; top: 0; }
   #game { position: fixed; left: 0; top: 0; pointer-events: none; }
-  .screen { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; overflow: auto; }
+  .screen { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; overflow: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
   .screen.show { display: flex; }
   .screen.dim { background: rgba(20,30,70,0.45); }
   button { font-family: var(--font); cursor: pointer; }
@@ -108,6 +108,20 @@
   #tThrow { right: 40px; bottom: 40px; width: 118px; height: 66px; background: rgba(51,209,160,0.8); }
   #tBoard { left: 16px; top: 16px; width: 74px; height: 50px; }
   #tPause { left: 98px; top: 16px; width: 92px; height: 50px; }
+  #tFull { left: 198px; top: 16px; width: 92px; height: 50px; font-size: 15px; }
+  .fsrow { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+  .fsrow .plain { margin-top: 0; flex: 0 0 auto; width: auto; padding: 10px 16px; }
+  .fsrow label { margin-top: 0; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+  .fsrow input { width: 22px; height: 22px; accent-color: var(--coral); }
+  /* Hold the tablet sideways: a drawn tablet turning on its side. */
+  #rotate { background: rgba(20,30,70,0.8); z-index: 20; text-align: center; }
+  #rotate .panel { max-width: 420px; }
+  .tablet { width: 70px; height: 100px; margin: 10px auto 18px; border: 6px solid var(--ink); border-radius: 14px; background: #bfe6ff; position: relative;
+    animation: turn 2.2s ease-in-out infinite; }
+  .tablet::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--ink); }
+  @keyframes turn { 0%, 25% { transform: rotate(0deg); } 55%, 100% { transform: rotate(-90deg); } }
+  @media (prefers-reduced-motion: reduce) { .tablet { animation: none; transform: rotate(-90deg); } }
+  @media (max-width: 1100px) { .chip { flex-direction: column; align-items: center; text-align: center; gap: 2px; font-size: 14px; } }
   @media (max-width: 760px) { .loadout { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
@@ -125,6 +139,8 @@
         <h2>맵</h2><div class="maps" id="mapSel"></div>
         <h2>마우스 감도</h2><input type="range" id="sens" min="0.2" max="3" step="0.05">
         <button class="big" id="startBtn">경기 시작 (Enter)</button>
+        <div class="fsrow"><button class="plain" id="fsTitle">전체화면</button>
+          <label><input type="checkbox" id="autoFull"> 경기 시작할 때 전체화면</label></div>
         <div class="controls">WASD 이동 · 마우스 조준 · 클릭 공격 · 우클릭 줌 · Space 점프 · Shift 질주<br>
           1~4 무기 · G 투척(C4는 한 번 더 눌러 기폭) · R 재장전 · Tab 점수판 · P 일시정지 · M 소리<br>
           태블릿: 왼쪽 스틱 이동 · 오른쪽 드래그 조준 · 화면 버튼</div>
@@ -155,6 +171,7 @@
     <label>마우스 감도 <input type="range" id="sensP" min="0.2" max="3" step="0.05"></label>
     <label>터치 감도 <input type="range" id="tsensP" min="0.2" max="3" step="0.05"></label>
     <button class="big" id="resumeBtn">계속 (P)</button>
+    <button class="plain" id="fsPause">전체화면</button>
     <button class="plain" id="muteBtn">소리 끄기 (M)</button>
     <button class="plain" id="quitBtn">경기 포기하고 타이틀로</button>
   </div>
@@ -181,6 +198,14 @@
   <button class="tb" id="tThrow">투척</button>
   <button class="tb" id="tBoard">점수</button>
   <button class="tb" id="tPause">일시정지</button>
+  <button class="tb" id="tFull">전체화면</button>
+</div>
+<div id="rotate" class="screen">
+  <div class="panel">
+    <div class="tablet"></div>
+    <h2>태블릿을 가로로 돌려 주세요</h2>
+    <div class="sub">이 게임은 가로 화면에서 플레이해요. 돌리면 일시정지에서 이어집니다.</div>
+  </div>
 </div>
 <div id="msg"></div>
 
@@ -211,7 +236,7 @@ const events = []; // window.game.events: anything the game wants a run to see
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 function fit() {
-  H = 720; W = Math.max(720, H * innerWidth / innerHeight);
+  H = 720; W = H * innerWidth / innerHeight;
   const s = innerHeight / H, r = s * (devicePixelRatio || 1);
   canvas.width = Math.round(W * r); canvas.height = Math.round(H * r);
   canvas.style.width = innerWidth + 'px'; canvas.style.height = innerHeight + 'px';

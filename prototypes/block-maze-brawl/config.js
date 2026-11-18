@@ -35,6 +35,7 @@ window.CONFIG = {
   gravity: { value: 20, min: 8, max: 40, step: 1 },               // m/s²
   mouse_sens: { value: 1, min: 0.2, max: 3, step: 0.05 },         // the pause screen sets it
   touch_sens: { value: 1, min: 0.2, max: 3, step: 0.05 },
+  melee_speed_mult: { value: 1.15, min: 1, max: 1.5, step: 0.01 },   // run faster with a melee weapon out
   key_turn_speed: { value: 2.6, min: 0.5, max: 6, step: 0.1 },    // rad/s, arrow keys turn
   fov: { value: 75, min: 60, max: 100, step: 1 },                 // degrees
   zoom_fov: { value: 22, min: 10, max: 50, step: 1 },             // sniper scope
@@ -76,11 +77,11 @@ window.CONFIG = {
     }
   };
   W('rifle',    { damage: 22, rate: 0.1,  mag: 30, reload: 1.8, spread: 1.1, recoil: 0.7, range: 120 });
-  W('sniper',   { damage: 95, rate: 1.15, mag: 5,  reload: 2.4, spread: 7,   recoil: 4.5, range: 200 }); // spread is unscoped
-  W('uzi',      { damage: 12, rate: 0.055,mag: 32, reload: 1.5, spread: 3.2, recoil: 0.45, range: 60 });
+  W('sniper',   { damage: 100, rate: 1.15, mag: 5,  reload: 2.4, spread: 7,   recoil: 4.5, range: 200 }); // spread is unscoped
+  W('uzi',      { damage: 15, rate: 0.055,mag: 32, reload: 1.5, spread: 3.2, recoil: 0.45, range: 60 });
   W('rpg',      { damage: 120,rate: 0.6,  mag: 1,  reload: 2.0, spread: 0.3, recoil: 5,   range: 120, radius: 4.2, count: 4 });
   W('pistol',   { damage: 25, rate: 0.22, mag: 12, reload: 1.3, spread: 1.3, recoil: 1.6, range: 80 });
-  W('revolver', { damage: 55, rate: 0.55, mag: 6,  reload: 2.2, spread: 0.9, recoil: 4,   range: 100 });
+  W('revolver', { damage: 63, rate: 0.55, mag: 6,  reload: 2.2, spread: 0.9, recoil: 4,   range: 100 });
   W('fist',     { damage: 25, rate: 0.42, range: 2.1 });
   W('knife',    { damage: 45, rate: 0.38, range: 2.3 });
   W('scythe',   { damage: 75, rate: 0.85, range: 3.3 });

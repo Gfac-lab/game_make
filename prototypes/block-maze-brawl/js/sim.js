@@ -420,7 +420,7 @@ function playerStep(p, dt) {
   const sprinting = (down.has('ShiftLeft') || down.has('ShiftRight') || len > 0.95 && touch.active && touch.my < -0.9) && fz < 0 && !M.zoom;
   let sp = sprinting ? tune.sprint_speed : tune.move_speed;
   if (M.zoom) sp *= 0.55;
-  if (WEAPONS[curW(p)].kind === 'melee') sp *= 1.08;
+  if (WEAPONS[curW(p)].kind === 'melee') sp *= tune.melee_speed_mult;
   const c = Math.cos(p.yaw), s = Math.sin(p.yaw);
   const dx = (c * fx + s * fz) * sp * dt, dz = (-s * fx + c * fz) * sp * dt;
   const bx = p.x, bz = p.z;

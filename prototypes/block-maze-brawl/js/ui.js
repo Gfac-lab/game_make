@@ -110,10 +110,45 @@ function startMatch() {
   startAudio();
   reset(); scene = 'play';
   lockPointer();
-  if (touchMode && document.documentElement.requestFullscreen && !document.fullscreenElement) {
-    try { document.documentElement.requestFullscreen().catch(() => {}); } catch (e) { /* not allowed here */ }
-  }
+  if (save.autoFull === undefined ? touchMode : save.autoFull) enterFull(true);
 }
+// ---- Fullscreen (and landscape on a tablet) ------------------------------------------------
+function fsElement() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+function fsSupported() {
+  const d = document.documentElement;
+  return !!(d.requestFullscreen || d.webkitRequestFullscreen) && (document.fullscreenEnabled || document.webkitFullscreenEnabled);
+}
+function lockLandscape() {
+  try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* this device keeps its own rotation */ }
+}
+/** Goes fullscreen; quiet=true when it is the automatic one at match start. */
+function enterFull(quiet) {
+  if (fsElement()) return;
+  if (!fsSupported()) { if (!quiet) flashMsg(FS_NO); return; }
+  const d = document.documentElement, req = d.requestFullscreen || d.webkitRequestFullscreen;
+  try {
+    const r = req.call(d, { navigationUI: 'hide' });
+    if (r && r.then) r.then(lockLandscape).catch(() => { if (!quiet) flashMsg(FS_NO); });
+    else lockLandscape();
+  } catch (e) { if (!quiet) flashMsg(FS_NO); }
+}
+const FS_NO = '이 화면에서는 전체화면이 막혀 있어요. 게임 파일을 브라우저로 직접 열거나, 공유 링크의 새 탭에서 열어 보세요.';
+function toggleFull() {
+  sfx.ui();
+  if (fsElement()) { const ex = document.exitFullscreen || document.webkitExitFullscreen; try { const r = ex.call(document); if (r && r.catch) r.catch(() => {}); } catch (e) { /* already out */ } }
+  else enterFull(false);
+}
+function updateFsUi() {
+  const on = !!fsElement();
+  for (const id of ['fsTitle', 'fsPause']) { const b = $(id); if (b) b.textContent = on ? '전체화면 끄기' : '전체화면'; }
+  const t = $('tFull'); if (t) t.textContent = on ? '창 모드' : '전체화면';
+  const c = $('autoFull'); if (c) c.checked = save.autoFull === undefined ? touchMode : save.autoFull;
+}
+document.addEventListener('fullscreenchange', updateFsUi);
+document.addEventListener('webkitfullscreenchange', updateFsUi);
+/** A tablet held upright: ask to turn it, and pause a running match until it is. */
+function isPortraitTouch() { return touchMode && innerHeight > innerWidth * 1.05; }
+
 function toTitle() { unlockPointer(); scene = 'title'; reset(); renderTitle(); }
 let lockedOnce = false, quietUnlock = false;
 function lockPointer() {
@@ -169,10 +204,14 @@ function syncDom() {
     $('results').classList.toggle('show', scene === 'results');
     $('death').classList.toggle('show', dead);
     if (scene === 'title') renderTitle();
+    updateFsUi();
     if (dead && !wasDead) { renderDeath(); unlockPointer(); }
     if (scene === 'pause') { $('sensP').value = CONFIG.mouse_sens.value; $('tsensP').value = CONFIG.touch_sens.value; $('muteBtn').textContent = muted ? '소리 켜기 (M)' : '소리 끄기 (M)'; }
   }
-  $('touch').classList.toggle('show', touchMode && scene === 'play' && M && M.player.alive && !M.over);
+  const portrait = isPortraitTouch();
+  $('rotate').classList.toggle('show', portrait && scene !== 'title');
+  if (portrait && scene === 'play' && M && M.player.alive && !M.over) scene = 'pause';
+  $('touch').classList.toggle('show', touchMode && !portrait && scene === 'play' && M && M.player.alive && !M.over);
   if (dead) {
     const left = tune.respawn_min - M.deathT, auto = Math.max(0, Math.ceil(tune.respawn_auto - M.deathT));
     const b = $('spawnBtn');
@@ -188,6 +227,8 @@ $('spawnBtn').onclick = () => { respawnPlayer(); if (M.player.alive) lockPointer
 $('resumeBtn').onclick = () => { scene = 'play'; lockPointer(); };
 $('muteBtn').onclick = () => { setMuted(!muted); $('muteBtn').textContent = muted ? '소리 켜기 (M)' : '소리 끄기 (M)'; };
 $('quitBtn').onclick = () => toTitle();
+$('fsTitle').onclick = $('fsPause').onclick = () => toggleFull();
+$('autoFull').onchange = e => { save.autoFull = e.target.checked; writeSave(); };
 $('againBtn').onclick = () => startMatch();
 $('armoryBtn').onclick = () => toTitle();
 $('sens').oninput = $('sensP').oninput = e => { CONFIG.mouse_sens.value = Number(e.target.value); save.sens = CONFIG.mouse_sens.value; writeSave(); };
@@ -261,6 +302,7 @@ addEventListener('keydown', e => { if (e.code === 'Tab') e.preventDefault(); });
   tap('tThrow', () => { touch.throwIt = true; });
   tap('tZoom', () => { touch.zoom = !touch.zoom; $('tZoom').classList.toggle('on', touch.zoom); });
   tap('tPause', () => { scene = 'pause'; });
+  tap('tFull', () => toggleFull());
   const board = $('tBoard');
   board.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); touch.board = true; });
   board.addEventListener('pointerup', () => { touch.board = false; }); board.addEventListener('pointercancel', () => { touch.board = false; });
