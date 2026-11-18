@@ -81,7 +81,7 @@ window.CONFIG = {
   hoe_value: { value: 0.35, min: 0, max: 5, step: 0.05 },        // + growth speed, whole field
   rake_cost: { value: 2000, min: 10, max: 100000, step: 50 },    // rake
   rake_value: { value: 0.08, min: 0, max: 1, step: 0.01 },       // + giant crop chance
-  shovel_cost: { value: 6000, min: 10, max: 300000, step: 100 }, // golden shovel
+  shovel_cost: { value: 1500, min: 10, max: 300000, step: 100 }, // golden shovel
   shovel_value: { value: 0.3, min: 0, max: 1, step: 0.01 },      // + double-harvest chance
 
   // ---- Hired farmhands: plant your seeds, harvest, and sell at the shop ----
@@ -95,7 +95,7 @@ window.CONFIG = {
   // ---- Gacha ----
   gacha_cost: { value: 25, min: 1, max: 1000, step: 1 },         // first normal pull, coins
   gacha_cost_growth: { value: 1.09, min: 1, max: 1.5, step: 0.01 }, // each pull costs this much more
-  gacha_cost_cap: { value: 30, min: 0, max: 100, step: 1 },      // pulls after which the price stops rising
+  gacha_cost_cap: { value: 55, min: 0, max: 100, step: 1 },      // pulls after which the price stops rising
   gacha_premium_cost: { value: 1500, min: 50, max: 50000, step: 50 }, // golden pull, coins
   // Chance weights per tier, normal pull: 일반, 에픽, 희귀, 전설, 시크릿, 신, 신을 낳은 신, 레전드 오브 레전드
   w0_normal: { value: 60, min: 0, max: 100, step: 0.5 },
@@ -120,8 +120,8 @@ window.CONFIG = {
   star_bonus: { value: 0.5, min: 0, max: 3, step: 0.05 },        // +this power per star above 1
   star_max: { value: 10, min: 1, max: 99, step: 1 },
   goods_cap: { value: 4, min: 1, max: 20, step: 1 },             // goods waiting by a pad before it rests
-  helper_sell_base: { value: 15, min: 1, max: 1000, step: 1 },   // coins for selling a 일반 helper at 1 star
-  helper_sell_growth: { value: 5, min: 1, max: 20, step: 0.5 },  // x per tier up
+  helper_sell_base: { value: 5, min: 1, max: 1000, step: 1 },   // coins for selling a 일반 helper at 1 star
+  helper_sell_growth: { value: 3, min: 1, max: 20, step: 0.5 },  // x per tier up
   chicken_every: { value: 10, min: 1, max: 120, step: 1 },       // seconds per egg
   chicken_value: { value: 16, min: 1, max: 1000, step: 1 },      // egg sell price
   tulip_value: { value: 0.3, min: 0, max: 5, step: 0.05 },       // + growth speed nearby

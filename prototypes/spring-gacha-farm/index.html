@@ -1139,7 +1139,9 @@ function growRate(i) {
     if (Math.hypot(pp.x - p.x, pp.z - p.z) <= tune[id + '_radius']) r += power(id);
   }
   if (placed('unicorn')) r += power('unicorn');
-  for (const sp of state.sprinklers) if (Math.hypot(sp.x - p.x, sp.z - p.z) <= tune[sp.k + '_radius'] + 0.6) r += tune[sp.k + '_value'];
+  let spr = 0; // sprinklers do not stack: the strongest one reaching this plot counts
+  for (const sp of state.sprinklers) if (Math.hypot(sp.x - p.x, sp.z - p.z) <= tune[sp.k + '_radius'] + 0.6) spr = Math.max(spr, tune[sp.k + '_value']);
+  r += spr;
   if (state.equip === 'can' && Math.hypot(state.player.x - p.x, state.player.z - p.z) <= tune.can_radius + 0.6) r += tune.can_value;
   if (state.equip === 'hoe') r += tune.hoe_value;
   return r;
@@ -1349,7 +1351,7 @@ function pull(premium) {
   let merged = false, refund = 0;
   if (had) {
     if (had.star < tune.star_max) { had.star++; merged = true; }
-    else { refund = helperPrice(id); state.coins += refund; }
+    else { refund = Math.round(tune.helper_sell_base * Math.pow(tune.helper_sell_growth, HELPER[id].tier)); state.coins += refund; } // one star's worth, never the whole stack
   } else state.helpers[id] = { star: 1, pad: -1 };
   state.seen[id] = true;
   state.menu = null;
@@ -1663,7 +1665,7 @@ function drawShop(m, px, py, pw, ph) {
         button(right - bw, yy + 2, bw, 46, held ? '들고 있어요' : own ? '손에 들기' : `사기 ${fmt(tune[t.id + '_cost'])}`, () => buyTool(t.id), { menuSel: k, sel: m.sel === k++, enabled: !held && (own || state.coins >= tune[t.id + '_cost']), size: 19 });
       } else {
         text(`${t.name}  (가방 ${state.items[t.id]}개 · 설치 ${state.sprinklers.filter(sp => sp.k === t.id).length}개)`, left + 58, yy + 14, 21, '#4a3a28', 'left');
-        text(`땅에 놓으면: 주변 ${tune[t.id + '_radius']}칸 성장 +${Math.round(tune[t.id + '_value'] * 100)}%`, left + 58, yy + 38, 16, '#7a6a54', 'left', 'normal');
+        text(`땅에 놓으면: 주변 ${tune[t.id + '_radius']}칸 성장 +${Math.round(tune[t.id + '_value'] * 100)}% (겹치면 센 것 하나만)`, left + 58, yy + 38, 16, '#7a6a54', 'left', 'normal');
         button(right - bw, yy + 2, bw, 46, `사기 ${fmt(tune[t.id + '_cost'])}`, () => buySprinkler(t.id), { menuSel: k, sel: m.sel === k++, enabled: state.coins >= tune[t.id + '_cost'], size: 19 });
       }
     });
