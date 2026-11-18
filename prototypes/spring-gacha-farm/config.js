@@ -22,7 +22,11 @@ window.CONFIG = {
 
   // ---- Field and pads ----
   field_start_rows: { value: 2, min: 1, max: 6, step: 1 },       // rows of 3 plots at start
-  field_max_rows: { value: 6, min: 1, max: 8, step: 1 },
+  field_max_rows: { value: 8, min: 1, max: 8, step: 1 },        // rows deep, at most
+  field_start_cols: { value: 3, min: 1, max: 5, step: 1 },       // columns at start
+  field_max_cols: { value: 5, min: 1, max: 5, step: 1 },         // columns wide, at most
+  field_col_cost: { value: 400, min: 10, max: 50000, step: 10 }, // first new column, coins
+  field_col_growth: { value: 4, min: 1.2, max: 10, step: 0.1 },
   field_row_cost: { value: 60, min: 10, max: 2000, step: 10 },   // first new row, coins
   field_row_growth: { value: 3, min: 1.2, max: 6, step: 0.1 },   // each next row costs this much more
   pads_start: { value: 2, min: 1, max: 8, step: 1 },             // helper pads at start
@@ -48,6 +52,45 @@ window.CONFIG = {
   watermelon_cost: { value: 300, min: 1, max: 5000, step: 10 },
   watermelon_grow: { value: 75, min: 2, max: 400, step: 1 },
   watermelon_sell: { value: 520, min: 1, max: 9000, step: 10 },
+  pineapple_cost: { value: 900, min: 1, max: 20000, step: 10 },
+  pineapple_grow: { value: 105, min: 2, max: 600, step: 1 },
+  pineapple_sell: { value: 1500, min: 1, max: 40000, step: 10 },
+  dragonfruit_cost: { value: 2800, min: 1, max: 60000, step: 50 },
+  dragonfruit_grow: { value: 140, min: 2, max: 800, step: 1 },
+  dragonfruit_sell: { value: 4600, min: 1, max: 120000, step: 50 },
+  starmelon_cost: { value: 9000, min: 1, max: 200000, step: 100 },
+  starmelon_grow: { value: 190, min: 2, max: 1000, step: 1 },
+  starmelon_sell: { value: 15000, min: 1, max: 400000, step: 100 },
+
+  // ---- Giant golden crops: a ripe crop sometimes grows huge and golden ----
+  giant_chance: { value: 0.07, min: 0, max: 1, step: 0.01 },     // chance each ripening
+  giant_mult: { value: 6, min: 1, max: 50, step: 0.5 },          // sells for this many times the price
+  giant_scale: { value: 1.75, min: 1, max: 3, step: 0.05 },      // how much bigger it looks
+
+  // ---- Shop gear: sprinklers (placed), watering can and farm tools (one in hand) ----
+  sprinkler_cost: { value: 300, min: 10, max: 20000, step: 10 },
+  sprinkler_value: { value: 0.6, min: 0, max: 5, step: 0.05 },   // + growth speed in reach
+  sprinkler_radius: { value: 3.6, min: 1, max: 12, step: 0.1 },
+  gsprinkler_cost: { value: 4000, min: 10, max: 200000, step: 100 },
+  gsprinkler_value: { value: 1.5, min: 0, max: 10, step: 0.1 },
+  gsprinkler_radius: { value: 5.5, min: 1, max: 15, step: 0.1 },
+  can_cost: { value: 150, min: 10, max: 20000, step: 10 },       // watering can
+  can_value: { value: 1.2, min: 0, max: 10, step: 0.1 },         // + growth speed near you
+  can_radius: { value: 4, min: 1, max: 12, step: 0.1 },
+  hoe_cost: { value: 600, min: 10, max: 50000, step: 10 },       // hoe
+  hoe_value: { value: 0.35, min: 0, max: 5, step: 0.05 },        // + growth speed, whole field
+  rake_cost: { value: 2000, min: 10, max: 100000, step: 50 },    // rake
+  rake_value: { value: 0.08, min: 0, max: 1, step: 0.01 },       // + giant crop chance
+  shovel_cost: { value: 6000, min: 10, max: 300000, step: 100 }, // golden shovel
+  shovel_value: { value: 0.3, min: 0, max: 1, step: 0.01 },      // + double-harvest chance
+
+  // ---- Hired farmhands: plant your seeds, harvest, and sell at the shop ----
+  worker_cost: { value: 500, min: 10, max: 100000, step: 10 },   // first farmhand, coins
+  worker_cost_growth: { value: 5, min: 1.2, max: 20, step: 0.1 },
+  workers_max: { value: 3, min: 1, max: 6, step: 1 },
+  worker_speed: { value: 3.6, min: 0.5, max: 12, step: 0.1 },    // units per second
+  worker_work_time: { value: 0.7, min: 0.1, max: 5, step: 0.1 }, // seconds per plant or harvest
+  worker_carry: { value: 8, min: 1, max: 50, step: 1 },          // crops carried before a trip to the shop
 
   // ---- Gacha ----
   gacha_cost: { value: 25, min: 1, max: 1000, step: 1 },         // first normal pull, coins

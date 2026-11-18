@@ -36,8 +36,8 @@ const PIXEL = false;
 const FONT = '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","NanumGothic","WenQuanYi Zen Hei",sans-serif';
 const TITLE = '봄빛 뽑기 농장';
 const CONTROLS = [
-  '컴퓨터: WASD 걷기 · 마우스 드래그/Q·E 카메라 · 스페이스 행동 · 1–8 고르기 · B 가게 · G 뽑기 · C 도감 · P 일시정지 · M 소리',
-  '태블릿: 왼쪽 조이스틱 걷기 · 오른쪽 드래그 카메라 · 큰 버튼 행동 · 아래 칸 탭으로 고르기',
+  '컴퓨터: WASD 걷기 · 마우스 드래그/Q·E 카메라 · 스페이스 행동 · 1–0 고르기 · T 도구 바꾸기 · B 가게 · G 뽑기 · C 도감 · P 일시정지 · M 소리',
+  '태블릿: 왼쪽 조이스틱 걷기 · 오른쪽 드래그 카메라 · 큰 버튼 행동 · 아래 칸 탭으로 고르기 · 도구 칸 탭으로 바꾸기',
 ];
 const clock = window.GAME_CLOCK || { now: () => performance.now() / 1000 }; // a check may inject one
 const CHEAP = params.get('render') === 'cheap'; // a headless shot or check: 3D draws cheap; players never see it
@@ -75,7 +75,23 @@ const CROPS = [
   { id: 'corn', name: '옥수수' },
   { id: 'pumpkin', name: '호박' },
   { id: 'watermelon', name: '수박' },
+  { id: 'pineapple', name: '파인애플' },
+  { id: 'dragonfruit', name: '용과' },
+  { id: 'starmelon', name: '별빛 멜론' },
 ];
+// gear from the shop: a tool is held in the hand (one at a time); sprinklers are placed on the ground
+const TOOLS = [
+  { id: 'can', name: '물뿌리개', what: () => `내 주변 ${tune.can_radius}칸 성장 +${Math.round(tune.can_value * 100)}%` },
+  { id: 'hoe', name: '호미', what: () => `밭 전체 성장 +${Math.round(tune.hoe_value * 100)}%` },
+  { id: 'rake', name: '갈퀴', what: () => `황금 대왕 작물 확률 +${Math.round(tune.rake_value * 100)}%` },
+  { id: 'shovel', name: '황금 삽', what: () => `수확 2배 확률 +${Math.round(tune.shovel_value * 100)}%` },
+];
+const TOOL = Object.fromEntries(TOOLS.map(t => [t.id, t]));
+const SPRINKLERS = [
+  { id: 'sprinkler', name: '스프링클러' },
+  { id: 'gsprinkler', name: '황금 스프링클러' },
+];
+const SPRK = Object.fromEntries(SPRINKLERS.map(t => [t.id, t]));
 const CROP = Object.fromEntries(CROPS.map(c => [c.id, c]));
 // kind: lay = drops goods to sell · coin = drops coins · grow = speeds crops near it ·
 // double = chance of a double harvest · sell = crops sell for more · all = boosts every helper
@@ -315,31 +331,33 @@ function signTexture(label, bg, fg, w = 256, h = 112) {
 }
 
 // ---- Figures -----------------------------------------------------------------------------
-function makePlayer() {
+function makePlayer(look = {}) {
+  const SHIRT = look.shirt || '#ff9fb2', PANTS = look.pants || '#3f6fc8', BAND = look.band || '#ff6f8f', HAT = look.hat || '#f2d16b';
   const g = new THREE.Group();
   const legL = new THREE.Group(), legR = new THREE.Group(), armL = new THREE.Group(), armR = new THREE.Group();
   legL.position.set(-0.2, 0.75, 0); legR.position.set(0.2, 0.75, 0);
-  part(legL, 0.34, 0.75, 0.36, '#3f6fc8', 0, -0.37, 0); part(legL, 0.36, 0.16, 0.44, '#6b4a2e', 0, -0.68, 0.04);
-  part(legR, 0.34, 0.75, 0.36, '#3f6fc8', 0, -0.37, 0); part(legR, 0.36, 0.16, 0.44, '#6b4a2e', 0, -0.68, 0.04);
-  part(g, 0.86, 0.78, 0.5, '#ff9fb2', 0, 1.15, 0, 0.12);           // shirt
-  part(g, 0.8, 0.5, 0.52, '#3f6fc8', 0, 0.92, 0, 0.08);             // overalls
-  part(g, 0.14, 0.42, 0.06, '#3f6fc8', -0.24, 1.28, 0.25, 0.03); part(g, 0.14, 0.42, 0.06, '#3f6fc8', 0.24, 1.28, 0.25, 0.03);
+  part(legL, 0.34, 0.75, 0.36, PANTS, 0, -0.37, 0); part(legL, 0.36, 0.16, 0.44, '#6b4a2e', 0, -0.68, 0.04);
+  part(legR, 0.34, 0.75, 0.36, PANTS, 0, -0.37, 0); part(legR, 0.36, 0.16, 0.44, '#6b4a2e', 0, -0.68, 0.04);
+  part(g, 0.86, 0.78, 0.5, SHIRT, 0, 1.15, 0, 0.12);           // shirt
+  part(g, 0.8, 0.5, 0.52, PANTS, 0, 0.92, 0, 0.08);             // overalls
+  part(g, 0.14, 0.42, 0.06, PANTS, -0.24, 1.28, 0.25, 0.03); part(g, 0.14, 0.42, 0.06, PANTS, 0.24, 1.28, 0.25, 0.03);
   part(g, 0.1, 0.1, 0.05, '#ffd34d', -0.24, 1.42, 0.28, 0.03); part(g, 0.1, 0.1, 0.05, '#ffd34d', 0.24, 1.42, 0.28, 0.03);
   armL.position.set(-0.56, 1.45, 0); armR.position.set(0.56, 1.45, 0);
-  part(armL, 0.26, 0.7, 0.3, '#ff9fb2', 0, -0.3, 0); part(armL, 0.24, 0.2, 0.26, '#f4c9a2', 0, -0.68, 0);
-  part(armR, 0.26, 0.7, 0.3, '#ff9fb2', 0, -0.3, 0); part(armR, 0.24, 0.2, 0.26, '#f4c9a2', 0, -0.68, 0);
+  part(armL, 0.26, 0.7, 0.3, SHIRT, 0, -0.3, 0); part(armL, 0.24, 0.2, 0.26, '#f4c9a2', 0, -0.68, 0);
+  part(armR, 0.26, 0.7, 0.3, SHIRT, 0, -0.3, 0); part(armR, 0.24, 0.2, 0.26, '#f4c9a2', 0, -0.68, 0);
   const head = new THREE.Group(); head.position.set(0, 1.92, 0);
   part(head, 0.78, 0.72, 0.72, '#f4c9a2', 0, 0, 0, 0.18);
   part(head, 0.1, 0.16, 0.05, '#2b2b35', -0.17, 0.04, 0.36, 0.03); part(head, 0.1, 0.16, 0.05, '#2b2b35', 0.17, 0.04, 0.36, 0.03);
   part(head, 0.14, 0.07, 0.04, '#ff8a8a', -0.26, -0.12, 0.36, 0.02); part(head, 0.14, 0.07, 0.04, '#ff8a8a', 0.26, -0.12, 0.36, 0.02);
   part(head, 0.2, 0.05, 0.04, '#9a4a3a', 0, -0.18, 0.37, 0.02);
   part(head, 0.84, 0.22, 0.6, '#8a5232', 0, 0.3, -0.12, 0.08);       // hair
-  part(head, 1.4, 0.08, 1.3, '#f2d16b', 0, 0.42, 0, 0.04);          // straw hat brim
-  part(head, 0.82, 0.34, 0.78, '#f2d16b', 0, 0.6, 0, 0.12);
-  part(head, 0.84, 0.1, 0.8, '#ff6f8f', 0, 0.5, 0, 0.04);           // hat band
+  part(head, 1.4, 0.08, 1.3, HAT, 0, 0.42, 0, 0.04);          // straw hat brim
+  part(head, 0.82, 0.34, 0.78, HAT, 0, 0.6, 0, 0.12);
+  part(head, 0.84, 0.1, 0.8, BAND, 0, 0.5, 0, 0.04);           // hat band
   g.add(legL, legR, armL, armR, head);
   blob(g, 0.6);
-  g.userData = { legL, legR, armL, armR, head };
+  const hand = new THREE.Group(); hand.position.set(0, -0.72, 0.12); armR.add(hand);
+  g.userData = { legL, legR, armL, armR, head, hand };
   return g;
 }
 
@@ -550,6 +568,19 @@ function makeProduce(id) {
     part(g, 0.5, 0.55, 0.5, '#ff961f', 0, 0.33, 0, 0.18);
     part(g, 0.12, 0.26, 0.12, '#5a7a2a', 0, 0.72, 0, 0.03).rotation.z = 0.2;
     part(g, 0.34, 0.05, 0.2, '#4fb24f', 0.16, 0.68, 0.05, 0.02).rotation.y = 0.6;
+  } else if (id === 'pineapple') {
+    part(g, 0.56, 0.8, 0.56, '#f2b531', 0, 0.42, 0, 0.2);
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 4; j++) { const d = part(g, 0.1, 0.1, 0.04, '#b9781a', (j - 1.5) * 0.12, 0.2 + i * 0.22, 0.28, 0.02); d.rotation.z = 0.785; }
+    for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2, l = part(g, 0.1, 0.55, 0.05, i % 2 ? '#3fa84a' : '#5cc15e', Math.cos(a) * 0.08, 1.05, Math.sin(a) * 0.08, 0.02); l.rotation.set(Math.sin(a) * 0.45, 0, -Math.cos(a) * 0.45); }
+  } else if (id === 'dragonfruit') {
+    part(g, 0.62, 0.78, 0.62, '#ff3f9a', 0, 0.4, 0, 0.24);
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, y = 0.25 + (i % 3) * 0.2; const sc = part(g, 0.2, 0.26, 0.06, '#d81b78', Math.cos(a) * 0.31, y, Math.sin(a) * 0.31, 0.03); sc.rotation.y = -a + Math.PI / 2; part(g, 0.08, 0.1, 0.04, '#9be06a', Math.cos(a) * 0.33, y + 0.15, Math.sin(a) * 0.33, 0.02); }
+    for (let i = 0; i < 3; i++) { const t = part(g, 0.14, 0.3, 0.06, '#8fd45a', (i - 1) * 0.12, 0.88, 0, 0.03); t.rotation.z = (i - 1) * 0.4; }
+  } else if (id === 'starmelon') {
+    part(g, 0.95, 0.85, 0.95, '#4a3fc8', 0, 0.44, 0, 0.34);
+    for (let i = 0; i < 4; i++) { const b = part(g, 0.1, 0.86, 0.97, '#6e62ff', 0, 0.44, 0, 0.05); b.rotation.y = i * Math.PI / 4; }
+    for (const [x, y, z] of [[0.3, 0.6, 0.42], [-0.35, 0.35, 0.4], [0.05, 0.75, -0.45], [0.45, 0.3, -0.2], [-0.2, 0.8, 0.2]]) { const st = part(g, 0.14, 0.14, 0.05, '#fff6a0', x, y, z, 0.02); st.rotation.z = 0.785; part(g, 0.08, 0.08, 0.06, '#ffffff', x, y, z, 0.02); }
+    part(g, 0.08, 0.16, 0.08, '#5a7a2a', 0, 0.92, 0, 0.02);
   } else if (id === 'watermelon') {
     part(g, 1.0, 0.68, 0.72, '#2f9a3f', 0, 0.36, 0, 0.3);
     for (let i = 0; i < 4; i++) part(g, 0.1, 0.7, 0.74, '#1c6b2a', -0.33 + i * 0.22, 0.37, 0, 0.05);
@@ -578,6 +609,39 @@ function makeGood(id) {
   }
   return g;
 }
+function makeTool(id) {
+  const g = new THREE.Group();
+  if (id === 'can') {
+    part(g, 0.5, 0.42, 0.34, '#4fb8a8', 0, 0.3, 0, 0.1); part(g, 0.36, 0.08, 0.26, '#3a9a8a', 0, 0.54, 0, 0.03);
+    const sp = part(g, 0.1, 0.1, 0.5, '#4fb8a8', 0, 0.36, 0.36, 0.03); sp.rotation.x = -0.6;
+    part(g, 0.18, 0.18, 0.06, '#3a9a8a', 0, 0.54, 0.56, 0.05);
+    part(g, 0.08, 0.32, 0.08, '#3a9a8a', 0, 0.62, -0.18, 0.03).rotation.x = 0.5;
+  } else if (id === 'hoe') {
+    part(g, 0.08, 1.2, 0.08, '#b07a40', 0, 0.6, 0, 0.03);
+    part(g, 0.32, 0.08, 0.26, '#9aa4b0', 0, 1.18, 0.14, 0.03);
+  } else if (id === 'rake') {
+    part(g, 0.08, 1.2, 0.08, '#b07a40', 0, 0.6, 0, 0.03);
+    part(g, 0.6, 0.08, 0.08, '#8a94a0', 0, 1.18, 0, 0.03);
+    for (let i = 0; i < 5; i++) part(g, 0.05, 0.05, 0.22, '#8a94a0', (i - 2) * 0.13, 1.18, 0.12, 0.02);
+  } else if (id === 'shovel') {
+    part(g, 0.08, 1.0, 0.08, '#b07a40', 0, 0.5, 0, 0.03);
+    part(g, 0.3, 0.08, 0.08, '#b07a40', 0, 1.0, 0, 0.03);
+    part(g, 0.32, 0.4, 0.06, '#ffcf3a', 0, -0.1, 0, 0.06); part(g, 0.16, 0.16, 0.07, '#ffcf3a', 0, -0.32, 0, 0.05);
+  }
+  return g;
+}
+function makeSprinkler(id) {
+  const g = new THREE.Group(), gold = id === 'gsprinkler';
+  const body = gold ? '#ffcf3a' : '#9aa4b0', dark = gold ? '#e0a51a' : '#6a7480';
+  part(g, 0.5, 0.12, 0.5, '#7a6a5a', 0, 0.06, 0, 0.04);
+  part(g, 0.14, 0.75, 0.14, dark, 0, 0.45, 0, 0.04);
+  const head = new THREE.Group(); head.position.y = 0.86; g.add(head);
+  part(head, 0.3, 0.18, 0.3, body, 0, 0, 0, 0.07);
+  for (let i = 0; i < (gold ? 4 : 2); i++) { const a = part(head, 0.5, 0.07, 0.07, body, 0.25, 0.05, 0, 0.02); a.position.set(Math.cos(i * Math.PI * 2 / (gold ? 4 : 2)) * 0.25, 0.05, Math.sin(i * Math.PI * 2 / (gold ? 4 : 2)) * 0.25); a.rotation.y = -i * Math.PI * 2 / (gold ? 4 : 2); part(head, 0.1, 0.1, 0.1, '#5cc8ff', a.position.x * 2, 0.08, a.position.z * 2, 0.03); }
+  g.userData.spin = head;
+  return g;
+}
+const FARMHAND_LOOK = { shirt: '#8fd46a', pants: '#a8743f', band: '#3f6fc8', hat: '#ffe08a' };
 function makeSeedBag(cropId) {
   const g = new THREE.Group();
   part(g, 0.7, 0.8, 0.3, '#d8b98a', 0, 0.4, 0, 0.08);
@@ -627,7 +691,7 @@ function scenicTree(x, z, kind, s = 1) {
   blob(g, 1.4);
   return g;
 }
-const treeSpots = [[-14, -12, 'cherry', 1.1], [13.5, 10, 'cherry', 1], [-14.5, 9.5, 'green', 1.1], [14.5, -12.5, 'green', 1],
+const treeSpots = [[-14, -12, 'cherry', 1.1], [13.5, 10, 'cherry', 1], [14.5, 4.5, 'green', 1.1], [14.5, -12.5, 'green', 1],
   [-22, -4, 'cherry', 1.4], [22, 2, 'cherry', 1.3], [-21, 12, 'green', 1.5], [21, -14, 'green', 1.4], [0, -21, 'cherry', 1.6],
   [-10, -21, 'green', 1.3], [11, -20, 'cherry', 1.4], [-8, 18, 'cherry', 1.3], [9, 18, 'green', 1.4], [26, 12, 'green', 1.6], [-27, -16, 'cherry', 1.5]];
 for (const [x, z, k, s] of treeSpots) { scenicTree(x, z, k, s); if (Math.abs(x) < 17 && Math.abs(z) < 15) colliders.push({ x, z, r: 1.2 * s }); }
@@ -727,8 +791,10 @@ const sparkleGeo = rbox(0.14, 0.14, 0.14, 0.03);
 const sparkles = []; // {mesh, vx, vy, vz, t}
 
 // Field plots and helper pads
-const PLOT_COLS = 3, PLOT_GAP = 2.3;
-function plotPos(i) { const c = i % PLOT_COLS, r = Math.floor(i / PLOT_COLS); return { x: -9.5 + c * PLOT_GAP, z: -4.5 + r * PLOT_GAP }; }
+const PLOT_GAP = 2.3;
+// columns 0-2 are the first field; columns 3 and 4 open to the left, rows open toward the camera
+function colX(c) { return c < 3 ? -9.5 + c * PLOT_GAP : -9.5 - (c - 2) * PLOT_GAP; }
+function plotPos(i) { const pl = state.plots[i]; return { x: colX(pl.c), z: -4.5 + pl.r * PLOT_GAP }; }
 function padPos(i) { const c = i % 2, r = Math.floor(i / 2); return { x: 2.4 + c * 2.8, z: -3.5 + r * 2.8 }; }
 const plotObjs = []; // {group, soil, crop, key}
 const padObjs = [];  // {group, helper, key, aura, goods:[mesh]}
@@ -738,7 +804,9 @@ function ensurePlotObjs() {
     part(g, 2.05, 0.3, 2.05, '#7a5234', 0, 0.12, 0, 0.12);
     for (let k = 0; k < 3; k++) part(g, 1.8, 0.06, 0.4, '#68442a', 0, 0.29, -0.6 + k * 0.6, 0.03);
     const crop = new THREE.Group(); crop.position.y = 0.3; g.add(crop);
-    plotObjs.push({ group: g, crop, key: '' });
+    const glow = new THREE.Mesh(new THREE.RingGeometry(0.8, 1.05, 4, 1).rotateX(-Math.PI / 2).rotateY(Math.PI / 4), glowMat('#ffd23f', 0.7));
+    glow.position.y = 0.32; glow.visible = false; g.add(glow);
+    plotObjs.push({ group: g, crop, glow, key: '' });
   }
   while (plotObjs.length > state.plots.length) { const o = plotObjs.pop(); world.remove(o.group); }
 }
@@ -761,15 +829,30 @@ function cropStage(pl) {
   const f = pl.prog;
   return f >= 1 ? 3 : f >= 0.6 ? 2 : f >= 0.25 ? 1 : 0;
 }
-function buildCropModel(holder, id, stage) {
+// a giant golden crop: every block of it tinted toward gold and given a warm glow
+const goldCache = new Map();
+function goldify(obj) {
+  obj.traverse(m => {
+    if (!m.isMesh || !m.material.color) return;
+    const hex = m.material.color.getHexString();
+    if (!goldCache.has(hex)) {
+      const c = m.material.color.clone().lerp(new THREE.Color('#ffd54a'), 0.55);
+      goldCache.set(hex, new THREE.MeshLambertMaterial({ color: c, emissive: '#6a4800', flatShading: true }));
+    }
+    m.material = goldCache.get(hex);
+  });
+}
+function buildCropModel(holder, id, stage, giant) {
   holder.clear();
   if (stage < 0) return;
+  if (stage === 3 && giant) { buildCropModel(holder, id, 3, false); goldify(holder); return; }
   if (stage === 0) { // seeds in a little mound
     for (let i = 0; i < 3; i++) part(holder, 0.34, 0.14, 0.34, '#8a5e3c', (i - 1) * 0.55, 0.05, (i % 2) * 0.3 - 0.15, 0.06);
     return;
   }
-  const leaf = id === 'pumpkin' || id === 'watermelon' ? '#5cbf4a' : '#57c25a';
-  const spots = id === 'pumpkin' || id === 'watermelon' ? [[0, 0]] : id === 'corn' ? [[-0.45, -0.45], [0.45, 0.45], [-0.45, 0.45], [0.45, -0.45]] : [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]];
+  const vine = id === 'pumpkin' || id === 'watermelon' || id === 'starmelon', single = id === 'pineapple' || id === 'dragonfruit';
+  const leaf = vine ? '#5cbf4a' : '#57c25a';
+  const spots = vine || single ? [[0, 0]] : id === 'corn' ? [[-0.45, -0.45], [0.45, 0.45], [-0.45, 0.45], [0.45, -0.45]] : [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]];
   for (const [x, z] of spots) {
     if (stage === 1) {
       part(holder, 0.05, 0.25, 0.05, leaf, x, 0.12, z, 0.02);
@@ -780,13 +863,17 @@ function buildCropModel(holder, id, stage) {
       part(holder, 0.12, h, 0.12, '#5aae3a', x, h / 2, z, 0.03);
       for (let k = 0; k < 3; k++) { const l = part(holder, 0.5, 0.05, 0.14, '#6cc04a', x + (k % 2 ? 0.2 : -0.2), h * (0.35 + k * 0.2), z, 0.02); l.rotation.z = k % 2 ? -0.5 : 0.5; }
       if (stage === 3) { const p = makeProduce('corn'); p.scale.setScalar(0.55); p.position.set(x + 0.12, h * 0.45, z + 0.08); p.rotation.z = -0.3; holder.add(p); }
-    } else if (id === 'pumpkin' || id === 'watermelon') {
+    } else if (single) {
+      const h = stage === 2 ? 0.6 : 0.9, col = id === 'pineapple' ? '#4fae5a' : '#7cc84a';
+      for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2, l = part(holder, 0.16, h, 0.08, col, Math.cos(a) * 0.32, h / 2, Math.sin(a) * 0.32, 0.03); l.rotation.set(Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5); }
+      if (stage === 3) { const p = makeProduce(id); p.scale.setScalar(1.05); p.position.y = 0.2; holder.add(p); }
+    } else if (vine) {
       for (let k = 0; k < 5; k++) {
         const a = k / 5 * Math.PI * 2;
         const l = part(holder, 0.5, 0.06, 0.4, leaf, Math.cos(a) * 0.6, 0.15 + (stage === 2 ? 0.1 : 0), Math.sin(a) * 0.6, 0.03); l.rotation.y = -a;
       }
       part(holder, 0.9, 0.05, 0.08, '#4a9a3a', 0, 0.08, 0.3, 0.02).rotation.y = 0.5;
-      if (stage === 3) { const p = makeProduce(id); p.scale.setScalar(id === 'pumpkin' ? 1.25 : 1.15); holder.add(p); }
+      if (stage === 3) { const p = makeProduce(id); p.scale.setScalar(id === 'pumpkin' ? 1.25 : id === 'starmelon' ? 1.1 : 1.15); holder.add(p); }
       else { const p = makeProduce(id); p.scale.setScalar(0.45); holder.add(p); }
     } else { // carrot, strawberry
       const s = stage === 2 ? 0.8 : 1;
@@ -801,10 +888,18 @@ function buildCropModel(holder, id, stage) {
 function syncPlots(t) {
   ensurePlotObjs();
   state.plots.forEach((pl, i) => {
-    const o = plotObjs[i], st = cropStage(pl), key = (pl.crop || '') + st;
-    if (o.key !== key) { o.key = key; buildCropModel(o.crop, pl.crop, st); o.pop = 0.25; }
+    const o = plotObjs[i], st = cropStage(pl), giant = st === 3 && pl.giant, key = (pl.crop || '') + st + (giant ? 'G' : '');
+    const pp = plotPos(i); o.group.position.set(pp.x, 0, pp.z);
+    if (o.key !== key) { o.key = key; buildCropModel(o.crop, pl.crop, st, giant); o.pop = 0.25; }
     const pop = o.pop > 0 ? 1 + Math.sin((0.25 - o.pop) / 0.25 * Math.PI) * 0.18 : 1;
-    o.crop.scale.set(pop, pop, pop);
+    const big = giant ? tune.giant_scale : 1;
+    o.crop.scale.set(pop * big, pop * big, pop * big);
+    o.glow.visible = giant;
+    if (giant) {
+      o.glow.material.opacity = 0.5 + 0.3 * Math.sin(t * 4 + i); o.glow.rotation.y = t;
+      if (crng() < 0.12) sparkle(pp.x + (crng() - 0.5) * 1.8, 0.6 + crng() * 1.8, pp.z + (crng() - 0.5) * 1.8, crng() < 0.5 ? '#ffe680' : '#fff6c8', 0.6);
+    }
+    if (o.pop > 0) o.pop -= STEP;
     o.crop.position.y = 0.3 + (st === 3 ? Math.abs(Math.sin(t * 3 + i)) * 0.06 : 0);
   });
 }
@@ -859,6 +954,39 @@ function burst(x, y, z, color, n = 16, up = 3) { for (let i = 0; i < n; i++) spa
 
 // Player
 const player = makePlayer(); world.add(player);
+let handTool = '';
+const canRing = new THREE.Mesh(new THREE.RingGeometry(0.96, 1, 40).rotateX(-Math.PI / 2), glowMat('#6cd0ff', 0.45));
+canRing.position.y = 0.05; canRing.visible = false; world.add(canRing);
+const sprObjs = []; // {group, key}
+function syncSprinklers(t) {
+  while (sprObjs.length < state.sprinklers.length) { const g = new THREE.Group(); world.add(g); sprObjs.push({ group: g, key: '' }); }
+  while (sprObjs.length > state.sprinklers.length) world.remove(sprObjs.pop().group);
+  state.sprinklers.forEach((sp, i) => {
+    const o = sprObjs[i];
+    if (o.key !== sp.k) {
+      o.key = sp.k; o.group.clear(); o.model = makeSprinkler(sp.k); o.group.add(o.model);
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.97, 1, 40).rotateX(-Math.PI / 2), glowMat(sp.k === 'gsprinkler' ? '#ffd23f' : '#6cd0ff', 0.35));
+      ring.position.y = 0.04; ring.scale.setScalar(tune[sp.k + '_radius']); o.group.add(ring);
+    }
+    o.group.position.set(sp.x, 0, sp.z);
+    o.model.userData.spin.rotation.y = t * 3 + i;
+    if (crng() < 0.35) { const a = crng() * Math.PI * 2, r = crng() * tune[sp.k + '_radius']; sparkle(sp.x + Math.cos(a) * r * 0.4, 1.0, sp.z + Math.sin(a) * r * 0.4, '#8fdcff', 0.8); }
+  });
+}
+const hands = []; // farmhand models
+function syncWorkers(dt) {
+  while (hands.length < state.workers.length) { const m = makePlayer(FARMHAND_LOOK); const basket = new THREE.Group(); part(basket, 0.6, 0.4, 0.45, '#c8964a', 0, 0, 0, 0.08); part(basket, 0.62, 0.08, 0.47, '#a8743f', 0, 0.2, 0, 0.03); basket.position.set(0, 1.0, 0.45); m.add(basket); m.userData.basket = basket; world.add(m); hands.push(m); }
+  while (hands.length > state.workers.length) world.remove(hands.pop());
+  state.workers.forEach((w, i) => {
+    const m = hands[i], u = m.userData;
+    m.position.set(w.x, w.moving ? Math.abs(Math.cos(w.walk || 0)) * 0.08 : 0, w.z); m.rotation.y = w.rot || 0;
+    const sw = w.moving ? Math.sin(w.walk || 0) * 0.7 : 0;
+    u.legL.rotation.x = sw; u.legR.rotation.x = -sw;
+    u.armL.rotation.x = w.busy > 0 ? -1.2 + Math.sin(w.busy * 14) * 0.4 : -sw * 0.8; u.armR.rotation.x = w.busy > 0 ? -1.2 - Math.sin(w.busy * 14) * 0.4 : sw * 0.8;
+    const n = Object.values(w.carry).reduce((a, b) => a + b, 0);
+    u.basket.visible = n > 0;
+  });
+}
 const highlight = new THREE.Group(); world.add(highlight);
 for (const [x, z, w, d] of [[0, -1.12, 2.4, 0.16], [0, 1.12, 2.4, 0.16], [-1.12, 0, 0.16, 2.4], [1.12, 0, 0.16, 2.4]])
   { const m = new THREE.Mesh(rbox(w, 0.12, d, 0.04), new THREE.MeshBasicMaterial({ color: '#fff36b' })); m.position.set(x, 0.36, z); highlight.add(m); }
@@ -872,21 +1000,26 @@ const figLabels = [];
   const rows = [
     HELPERS.slice(0, 6).map(h => ['helper', h.id, h.name, TIERS[h.tier].name]),
     HELPERS.slice(6).map(h => ['helper', h.id, h.name, TIERS[h.tier].name]),
-    [['player', '', '농부(나)']].concat(CROPS.map(c => ['crop', c.id, c.name])),
-    Object.keys(GOODS).map(k => ['good', k, GOODS[k]]).concat([['gacha', '', '뽑기 기계']]),
+    CROPS.map(c => ['crop', c.id, c.name]),
+    [['player', '', '농부(나)'], ['hand', '', '일꾼']].concat(TOOLS.map(t => ['tool', t.id, t.name]), SPRINKLERS.map(t => ['spr', t.id, t.name])),
+    Object.keys(GOODS).map(k => ['good', k, GOODS[k]]).concat([['gacha', '', '뽑기 기계'], ['giant', 'pumpkin', '황금 대왕 호박']]),
   ];
   rows.forEach((row, r) => row.forEach(([kind, id, label, sub], i) => {
-    const x = (i - (row.length - 1) / 2) * 4.6, z = -10 + r * 5;
+    const x = (i - (row.length - 1) / 2) * 3.7, z = -14 + r * 5.4;
     let m;
     if (kind === 'helper') m = makeHelper(id);
     else if (kind === 'player') m = makePlayer();
+    else if (kind === 'hand') m = makePlayer(FARMHAND_LOOK);
+    else if (kind === 'tool') { m = makeTool(id); m.scale.setScalar(1.4); }
+    else if (kind === 'spr') { m = makeSprinkler(id); m.scale.setScalar(1.5); }
+    else if (kind === 'giant') { m = makeProduce(id); goldify(m); m.scale.setScalar(2.2); }
     else if (kind === 'crop') { m = makeProduce(id); m.scale.setScalar(1.6); }
     else if (kind === 'good') { m = makeGood(id); m.scale.setScalar(2.2); }
     else { m = new THREE.Group(); const g2 = new THREE.Group(); part(g2, 1.2, 0.9, 1.1, '#ff7fa8', 0, 0.45, 0, 0.15); const d = new THREE.Mesh(new THREE.SphereGeometry(0.6, 12, 10), new THREE.MeshLambertMaterial({ color: '#dff6ff', transparent: true, opacity: 0.5 })); d.position.y = 1.4; g2.add(d); part(g2, 0.6, 0.18, 0.6, '#ffd23f', 0, 0.95, 0, 0.06); m.add(g2); }
     m.position.set(x, 0, z); m.rotation.y = 0.5; figScene.add(m);
     figLabels.push({ x, z: z + 1.5, label, sub });
   }));
-  figCam.position.set(0, 20, 16); figCam.lookAt(0, 0, -1.5);
+  figCam.position.set(0, 27, 21); figCam.lookAt(0, 0, -2.4);
 })();
 
 // ---- Thumbnails: each icon is the 3D model, rendered once -----------------------------------
@@ -910,6 +1043,10 @@ const thumbs = {};
   HELPERS.forEach(h => snap('h:' + h.id, makeHelper(h.id)));
   CROPS.forEach(cp => { snap('c:' + cp.id, makeProduce(cp.id)); snap('s:' + cp.id, makeSeedBag(cp.id)); });
   Object.keys(GOODS).forEach(k => snap('g:' + k, makeGood(k)));
+  CROPS.forEach(cp => { const m = makeProduce(cp.id); goldify(m); snap('gc:' + cp.id, m); });
+  TOOLS.forEach(t => snap('t:' + t.id, makeTool(t.id)));
+  SPRINKLERS.forEach(t => snap('p:' + t.id, makeSprinkler(t.id)));
+  snap('w:hand', makePlayer(FARMHAND_LOOK));
   tr.dispose();
 })();
 function icon(key, x, y, size, dark = false) {
@@ -929,17 +1066,21 @@ function newState() {
   const s = {
     t: 0, score: 0, gained: '',
     coins: tune.start_coins, earned: 0,
-    seeds: { carrot: tune.start_carrot_seeds, strawberry: 0, corn: 0, pumpkin: 0, watermelon: 0 },
-    crops: { carrot: 0, strawberry: 0, corn: 0, pumpkin: 0, watermelon: 0 },
+    seeds: Object.fromEntries(CROPS.map(c => [c.id, c.id === 'carrot' ? tune.start_carrot_seeds : 0])),
+    crops: Object.fromEntries(CROPS.map(c => [c.id, 0])),
+    gold: Object.fromEntries(CROPS.map(c => [c.id, 0])), // giant golden crops in the bag
+    tools: {}, equip: null,                                // owned tools; the one in hand
+    items: { sprinkler: 0, gsprinkler: 0 }, sprinklers: [], // in the bag; placed {k, x, z}
+    workers: [], giants: 0,
     goods: { egg: [0, 0], milk: [0, 0], wool: [0, 0], honey: [0, 0] }, // [count, value]
     helpers: {}, // id -> {star, pad}
     seen: {},    // id -> true once pulled
-    rows: tune.field_start_rows, plots: [], pads: [],
+    rows: tune.field_start_rows, cols: tune.field_start_cols, plots: [], pads: [],
     pulls: 0, harvests: 0, sel: 0,
     player: { x: -5.2, z: 0.4, rot: Math.PI }, yaw: 0, zoom: 0,
     menu: null, reveal: null, hints: {},
   };
-  for (let i = 0; i < s.rows * PLOT_COLS; i++) s.plots.push({ crop: null, prog: 0, left: 0 });
+  for (let r = 0; r < s.rows; r++) for (let c = 0; c < s.cols; c++) s.plots.push({ c, r, crop: null, prog: 0, left: 0 });
   for (let i = 0; i < tune.pads_start; i++) s.pads.push({ h: null, timer: 0, goods: [] });
   return s;
 }
@@ -961,6 +1102,10 @@ function load() {
     const raw = localStorage.getItem(SAVE_KEY); if (!raw) return false;
     const d = JSON.parse(raw); const fresh = newState();
     state = Object.assign(fresh, d.s, { menu: null, reveal: null });
+    for (const k of ['seeds', 'crops', 'gold']) state[k] = Object.assign(Object.fromEntries(CROPS.map(c => [c.id, 0])), state[k]);
+    state.plots.forEach((pl, i) => { if (pl.c === undefined) { pl.c = i % 3; pl.r = Math.floor(i / 3); } });
+    if (!state.cols) state.cols = 3;
+    state.workers.forEach(w => { w.task = null; w.busy = 0; });
     seed = d.seed || seed;
     return true;
   } catch (_) { return false; }
@@ -979,17 +1124,25 @@ function growRate(i) {
     if (Math.hypot(pp.x - p.x, pp.z - p.z) <= tune[id + '_radius']) r += power(id);
   }
   if (placed('unicorn')) r += power('unicorn');
+  for (const sp of state.sprinklers) if (Math.hypot(sp.x - p.x, sp.z - p.z) <= tune[sp.k + '_radius'] + 0.6) r += tune[sp.k + '_value'];
+  if (state.equip === 'can' && Math.hypot(state.player.x - p.x, state.player.z - p.z) <= tune.can_radius + 0.6) r += tune.can_value;
+  if (state.equip === 'hoe') r += tune.hoe_value;
   return r;
 }
+function giantChance() { return Math.min(0.9, tune.giant_chance + (state.equip === 'rake' ? tune.rake_value : 0)); }
 function doubleChance() {
   let c = placed('rabbit') ? power('rabbit') : 0;
   if (placed('unicorn')) c += tune.unicorn_double * starMult('unicorn') * allBoost('unicorn');
+  if (state.equip === 'shovel') c += tune.shovel_value;
   return Math.min(0.95, c);
 }
 function cropPrice(id) { return Math.round(tune[id + '_sell'] * (placed('sunflower') ? 1 + power('sunflower') : 1)); }
 function gachaCost() { return Math.round(tune.gacha_cost * Math.pow(tune.gacha_cost_growth, Math.min(state.pulls, tune.gacha_cost_cap))); }
 function helperPrice(id) { const h = state.helpers[id]; return Math.round(tune.helper_sell_base * Math.pow(tune.helper_sell_growth, HELPER[id].tier) * (h ? h.star : 1)); }
 function rowCost() { return Math.round(tune.field_row_cost * Math.pow(tune.field_row_growth, state.rows - tune.field_start_rows)); }
+function colCost() { return Math.round(tune.field_col_cost * Math.pow(tune.field_col_growth, state.cols - tune.field_start_cols)); }
+function workerCost() { return Math.round(tune.worker_cost * Math.pow(tune.worker_cost_growth, state.workers.length)); }
+function giantPrice(id) { return Math.round(cropPrice(id) * tune.giant_mult); }
 function padCost() { return Math.round(tune.pad_cost * Math.pow(tune.pad_growth, state.pads.length - tune.pads_start)); }
 function abilityText(id, star) {
   const h = HELPER[id], s = 1 + tune.star_bonus * ((star || 1) - 1);
@@ -1025,7 +1178,8 @@ function hotbarItems() {
   const items = [];
   for (const c of CROPS) if (state.seeds[c.id] > 0) items.push({ type: 'seed', id: c.id });
   for (const h of HELPERS) { const o = state.helpers[h.id]; if (o && o.pad < 0) items.push({ type: 'helper', id: h.id }); }
-  return items.slice(0, 8);
+  for (const t of SPRINKLERS) if (state.items[t.id] > 0) items.push({ type: 'spr', id: t.id });
+  return items.slice(0, 10);
 }
 function selected() { const it = hotbarItems(); return it[Math.min(state.sel, it.length - 1)] || null; }
 
@@ -1036,18 +1190,22 @@ function targetNear() {
   const consider = (d, t) => { if (d < bd) { bd = d; best = t; } };
   state.plots.forEach((pl, i) => { const p = plotPos(i); consider(Math.hypot(p.x - px, p.z - pz) - 0.3, { kind: 'plot', i, x: p.x, z: p.z }); });
   state.pads.forEach((pd, i) => { const p = padPos(i); consider(Math.hypot(p.x - px, p.z - pz) - 0.3, { kind: 'pad', i, x: p.x, z: p.z }); });
+  state.sprinklers.forEach((sp, i) => consider(Math.hypot(sp.x - px, sp.z - pz) - 0.5, { kind: 'spr', i, x: sp.x, z: sp.z }));
   consider(Math.hypot(SHOP_SPOT.x - px, SHOP_SPOT.z - pz) - 0.6, { kind: 'shop', x: SHOP_SPOT.x, z: SHOP_SPOT.z });
   consider(Math.hypot(GACHA_SPOT.x - px, GACHA_SPOT.z - pz) - 0.6, { kind: 'gacha', x: GACHA_SPOT.x, z: GACHA_SPOT.z });
   return best;
 }
 function actionLabel(t) {
+  const sel = selected();
+  if (sel && sel.type === 'spr') return `${SPRK[sel.id].name} 놓기`;
   if (!t) return '';
+  if (t.kind === 'spr') return `${SPRK[state.sprinklers[t.i].k].name} 줍기`;
   if (t.kind === 'shop') return '가게 열기';
   if (t.kind === 'gacha') return '뽑기';
   if (t.kind === 'plot') {
     const pl = state.plots[t.i];
     if (!pl.crop) { const s = seedToUse(); return s ? `${CROP[s].name} 심기` : '씨앗 없음'; }
-    if (pl.prog >= 1) return `${CROP[pl.crop].name} 수확`;
+    if (pl.prog >= 1) return pl.giant ? `황금 ${CROP[pl.crop].name} 수확` : `${CROP[pl.crop].name} 수확`;
     return `자라는 중 ${Math.floor(pl.prog * 100)}%`;
   }
   if (t.kind === 'pad') {
@@ -1067,10 +1225,37 @@ function helperToUse() {
   for (const h of HELPERS) { const o = state.helpers[h.id]; if (o && o.pad < 0) return h.id; }
   return null;
 }
+// Where a sprinkler may stand: on open ground, not on a plot, a pad, a building or another sprinkler.
+function canPlaceAt(x, z) {
+  for (let i = 0; i < state.plots.length; i++) { const p = plotPos(i); if (Math.abs(p.x - x) < 1.15 && Math.abs(p.z - z) < 1.15) return false; }
+  for (let i = 0; i < state.pads.length; i++) { const p = padPos(i); if (Math.abs(p.x - x) < 1.3 && Math.abs(p.z - z) < 1.3) return false; }
+  for (const sp of state.sprinklers) if (Math.hypot(sp.x - x, sp.z - z) < 0.9) return false;
+  for (const c of colliders) if (Math.hypot(c.x - x, c.z - z) < c.r + 0.3) return false;
+  return true;
+}
+// One harvest: the crop, how many, and whether it is a giant. Used by the player and the farmhands.
+function harvestPlot(i) {
+  const pl = state.plots[i], crop = pl.crop, giant = !!pl.giant;
+  let n = 1; if (rng() < doubleChance()) n = 2;
+  state.harvests++; if (giant) state.giants++;
+  pl.left--; pl.giant = false;
+  if (pl.left > 0) pl.prog = Math.max(0.6, 1 - tune.strawberry_regrow / tune.strawberry_grow); else { pl.crop = null; pl.prog = 0; }
+  return { crop, n, giant };
+}
 function act() {
+  const sel = selected();
+  if (sel && sel.type === 'spr') {
+    const pl = state.player, x = pl.x + Math.sin(pl.rot) * 1.0, z = pl.z + Math.cos(pl.rot) * 1.0;
+    if (!canPlaceAt(x, z)) { sfx.nope(); toast('밭이나 돌판 위가 아닌 빈 땅에 놓아요 (밭 옆이 좋아요)'); return; }
+    state.items[sel.id]--; state.sprinklers.push({ k: sel.id, x, z });
+    sfx.merge(); burst(x, 1, z, '#8fdcff', 16, 2.5); toast(`${SPRK[sel.id].name}: 주변 ${tune[sel.id + '_radius']}칸 성장 +${Math.round(tune[sel.id + '_value'] * 100)}%`, '#e6f7ff');
+    events.push({ type: 'sprinkler', k: sel.id }); save();
+    return;
+  }
   const t = targetNear();
   if (!t) { sfx.nope(); toast('밭, 친구 자리, 가게, 뽑기 기계 가까이에서 눌러 주세요'); return; }
   if (t.kind === 'shop') { openMenu('shop'); return; }
+  if (t.kind === 'spr') { const sp = state.sprinklers.splice(t.i, 1)[0]; state.items[sp.k]++; sfx.click(); toast(`${SPRK[sp.k].name}을(를) 가방에 넣었어요`); return; }
   if (t.kind === 'gacha') { openMenu('gacha'); return; }
   if (t.kind === 'plot') {
     const pl = state.plots[t.i];
@@ -1082,14 +1267,18 @@ function act() {
       return;
     }
     if (pl.prog >= 1) {
-      let n = 1; if (rng() < doubleChance()) n = 2;
-      state.crops[pl.crop] += n; state.harvests++;
-      floatText(t.x, 1.5, t.z, n > 1 ? `${CROP[pl.crop].name} x2!` : `+1 ${CROP[pl.crop].name}`, n > 1 ? '#ffd23f' : '#ffffff');
-      burst(t.x, 0.8, t.z, '#ffe27a', n > 1 ? 18 : 8, 2.4);
-      sfx.pop(); events.push({ type: 'harvest', crop: pl.crop, n });
-      pl.left--;
-      if (pl.left > 0) pl.prog = 1 - tune.strawberry_regrow / tune.strawberry_grow * 1; else { pl.crop = null; pl.prog = 0; }
-      if (pl.crop) pl.prog = Math.max(0.6, pl.prog);
+      const h = harvestPlot(t.i), name = CROP[h.crop].name;
+      if (h.giant) {
+        state.gold[h.crop] += h.n;
+        floatText(t.x, 2.2, t.z, `황금 대왕 ${name}${h.n > 1 ? ' x2' : ''}!`, '#ffd23f');
+        burst(t.x, 1.2, t.z, '#ffd23f', 40, 4); sfx.reveal(3);
+        toast(`황금 대왕 ${name}! 하나에 ${fmt(giantPrice(h.crop))}코인`, '#fff3b0');
+      } else {
+        state.crops[h.crop] += h.n;
+        floatText(t.x, 1.5, t.z, h.n > 1 ? `${name} x2!` : `+1 ${name}`, h.n > 1 ? '#ffd23f' : '#ffffff');
+        burst(t.x, 0.8, t.z, '#ffe27a', h.n > 1 ? 18 : 8, 2.4); sfx.pop();
+      }
+      events.push({ type: 'harvest', crop: h.crop, n: h.n, giant: h.giant });
       if (!state.hints.sell && state.harvests >= 2) { state.hints.sell = true; toast('수확한 작물은 가게에서 팔아요'); }
       return;
     }
@@ -1168,6 +1357,7 @@ function endReveal() {
 function sellAll() {
   let total = 0, lines = [];
   for (const c of CROPS) { const n = state.crops[c.id]; if (n) { const v = n * cropPrice(c.id); total += v; lines.push(`${c.name} ${n}개 +${fmt(v)}`); state.crops[c.id] = 0; } }
+  for (const c of CROPS) { const n = state.gold[c.id]; if (n) { const v = n * giantPrice(c.id); total += v; lines.push(`황금 대왕 ${c.name} ${n}개 +${fmt(v)}`); state.gold[c.id] = 0; } }
   for (const k of Object.keys(state.goods)) { const [n, v] = state.goods[k]; if (n) { total += v; lines.push(`${GOODS[k]} ${n}개 +${fmt(v)}`); state.goods[k] = [0, 0]; } }
   if (!total) { sfx.nope(); toast('팔 것이 없어요'); return; }
   state.sale = { lines, total, t: 0 };
@@ -1183,8 +1373,42 @@ function buyRow() {
   if (state.rows >= tune.field_max_rows) return;
   const c = rowCost(); if (state.coins < c) { sfx.nope(); toast(`코인이 ${fmt(c - state.coins)} 모자라요`); return; }
   state.coins -= c; state.rows++;
-  for (let i = 0; i < PLOT_COLS; i++) state.plots.push({ crop: null, prog: 0, left: 0 });
+  for (let c = 0; c < state.cols; c++) state.plots.push({ c, r: state.rows - 1, crop: null, prog: 0, left: 0 });
   sfx.merge(); toast('밭이 넓어졌어요!'); save();
+}
+function buyCol() {
+  if (state.cols >= tune.field_max_cols) return;
+  const c = colCost(); if (state.coins < c) { sfx.nope(); toast(`코인이 ${fmt(c - state.coins)} 모자라요`); return; }
+  state.coins -= c;
+  for (let r = 0; r < state.rows; r++) state.plots.push({ c: state.cols, r, crop: null, prog: 0, left: 0 });
+  state.cols++;
+  sfx.merge(); toast('밭이 옆으로 넓어졌어요!'); save();
+}
+function buyTool(id) {
+  if (state.tools[id]) { state.equip = id; sfx.click(); toast(`${TOOL[id].name}을(를) 손에 들었어요`); return; }
+  const c = tune[id + '_cost']; if (state.coins < c) { sfx.nope(); toast(`코인이 ${fmt(c - state.coins)} 모자라요`); return; }
+  state.coins -= c; state.tools[id] = true; state.equip = id;
+  sfx.merge(); toast(`${TOOL[id].name}을(를) 손에 들었어요: ${TOOL[id].what()}`, '#fff6c8', 3.4); save();
+}
+function cycleTool() {
+  const owned = TOOLS.filter(t => state.tools[t.id]).map(t => t.id);
+  if (!owned.length) { sfx.nope(); toast('가게의 도구 칸에서 물뿌리개나 농기구를 사요'); return; }
+  const list = [null].concat(owned), i = list.indexOf(state.equip);
+  state.equip = list[(i + 1) % list.length]; sfx.click();
+  toast(state.equip ? `${TOOL[state.equip].name}: ${TOOL[state.equip].what()}` : '빈손');
+}
+function buySprinkler(id) {
+  const c = tune[id + '_cost']; if (state.coins < c) { sfx.nope(); toast(`코인이 ${fmt(c - state.coins)} 모자라요`); return; }
+  state.coins -= c; state.items[id]++;
+  const it = hotbarItems(), k = it.findIndex(x => x.type === 'spr' && x.id === id); if (k >= 0) state.sel = k;
+  sfx.coin(); if (!state.hints.spr) { state.hints.spr = true; toast(`${SPRK[id].name}을(를) 골라 밭 옆 빈 땅에서 행동 버튼을 눌러 놓아요`, '#e6f7ff', 4); } save();
+}
+function hireWorker() {
+  if (state.workers.length >= tune.workers_max) return;
+  const c = workerCost(); if (state.coins < c) { sfx.nope(); toast(`코인이 ${fmt(c - state.coins)} 모자라요`); return; }
+  state.coins -= c;
+  state.workers.push({ x: SHOP_SPOT.x, z: SHOP_SPOT.z + 1, rot: 0, carry: {}, gold: {}, task: null, busy: 0, walk: 0 });
+  sfx.merge(); toast('일꾼이 왔어요! 씨앗이 있으면 알아서 심고, 수확해서 팔아 줘요', '#fff6c8', 4); save();
 }
 function buyPad() {
   if (state.pads.length >= tune.pads_max) return;
@@ -1203,12 +1427,78 @@ function sellHelper(id) {
 function openMenu(type) { state.menu = { type, tab: 0, sel: 0, confirm: null }; sfx.click(); }
 
 // ---- The world's update -------------------------------------------------------------------
+// Farmhands: harvest what is ripe, plant your best seed in empty plots, and carry the crops to the shop.
+function workerTarget(w) {
+  if (w.task.kind === 'sell') return SHOP_SPOT;
+  const p = plotPos(w.task.i); return { x: p.x, z: p.z + 1.0 };
+}
+function pickTask(w, wi) {
+  const carryN = Object.values(w.carry).reduce((a, b) => a + b, 0) + Object.values(w.gold).reduce((a, b) => a + b, 0);
+  if (carryN >= tune.worker_carry) return { kind: 'sell' };
+  const taken = new Set(state.workers.filter((o, k) => k !== wi && o.task && o.task.i !== undefined).map(o => o.task.i));
+  let best = -1, bd = 1e9;
+  const near = test => state.plots.forEach((pl, i) => {
+    if (taken.has(i) || !test(pl)) return;
+    const p = plotPos(i), d = Math.hypot(p.x - w.x, p.z - w.z); if (d < bd) { bd = d; best = i; }
+  });
+  near(pl => pl.crop && pl.prog >= 1);
+  if (best >= 0) return { kind: 'harvest', i: best };
+  if (CROPS.some(c => state.seeds[c.id] > 0)) { near(pl => !pl.crop); if (best >= 0) return { kind: 'plant', i: best }; }
+  if (carryN > 0) return { kind: 'sell' };
+  return null;
+}
+function finishTask(w) {
+  const t = w.task; w.task = null;
+  if (t.kind === 'plant') {
+    const pl = state.plots[t.i]; if (pl.crop) return;
+    const seedId = CROPS.slice().reverse().map(c => c.id).find(id => state.seeds[id] > 0); if (!seedId) return;
+    state.seeds[seedId]--; pl.crop = seedId; pl.prog = 0; pl.giant = false; pl.left = seedId === 'strawberry' ? tune.strawberry_harvests : 1;
+    const p = plotPos(t.i); burst(p.x, 0.5, p.z, '#a8744a', 4, 1.2);
+  } else if (t.kind === 'harvest') {
+    const pl = state.plots[t.i]; if (!pl.crop || pl.prog < 1) return;
+    const h = harvestPlot(t.i), bag = h.giant ? w.gold : w.carry, p = plotPos(t.i);
+    bag[h.crop] = (bag[h.crop] || 0) + h.n;
+    floatText(p.x, 1.5, p.z, h.giant ? `황금 대왕 ${CROP[h.crop].name}!` : `+${h.n} ${CROP[h.crop].name}`, h.giant ? '#ffd23f' : '#d8ffd0');
+    burst(p.x, 0.8, p.z, h.giant ? '#ffd23f' : '#ffe27a', h.giant ? 30 : 6, 2.2);
+  } else if (t.kind === 'sell') {
+    let v = 0;
+    for (const [id, n] of Object.entries(w.carry)) v += n * cropPrice(id);
+    for (const [id, n] of Object.entries(w.gold)) v += n * giantPrice(id);
+    w.carry = {}; w.gold = {};
+    if (v > 0) { addCoins(v, SHOP_SPOT.x, 2.6, SHOP_SPOT.z); sfx.coin(); events.push({ type: 'worker-sell', total: v }); }
+  }
+}
+function updateWorkers(dt) {
+  state.workers.forEach((w, wi) => {
+    if (w.busy > 0) { w.busy -= dt; w.moving = false; if (w.busy <= 0) { w.busy = 0; finishTask(w); } return; }
+    if (!w.task) w.task = pickTask(w, wi);
+    if (!w.task) { w.moving = false; return; }
+    const g = workerTarget(w), dx = g.x - w.x, dz = g.z - w.z, d = Math.hypot(dx, dz), stepLen = tune.worker_speed * dt;
+    if (d > 0.2) {
+      const k = Math.min(1, stepLen / d); w.x += dx * k; w.z += dz * k;
+      w.rot = Math.atan2(dx, dz); w.walk = (w.walk || 0) + dt * 9; w.moving = true;
+      return;
+    }
+    w.moving = false;
+    const pl = w.task.i !== undefined ? state.plots[w.task.i] : null;
+    const ok = w.task.kind === 'sell' || (w.task.kind === 'plant' ? pl && !pl.crop : pl && pl.crop && pl.prog >= 1);
+    if (!ok) { w.task = null; return; }
+    if (w.task.kind !== 'sell') w.rot = Math.PI;
+    w.busy = w.task.kind === 'sell' ? 0.4 : tune.worker_work_time;
+  });
+}
 function updateFarm(dt) {
+  updateWorkers(dt);
   // crops grow on their own
   state.plots.forEach((pl, i) => {
     if (pl.crop && pl.prog < 1) {
       pl.prog = Math.min(1, pl.prog + dt * growRate(i) / tune[pl.crop + '_grow']);
-      if (pl.prog >= 1) { const p = plotPos(i); burst(p.x, 0.8, p.z, '#fff7a0', 6, 1.6); events.push({ type: 'ripe', crop: pl.crop }); }
+      if (pl.prog >= 1) {
+        const p = plotPos(i); pl.giant = rng() < giantChance();
+        burst(p.x, 0.8, p.z, pl.giant ? '#ffd23f' : '#fff7a0', pl.giant ? 30 : 6, pl.giant ? 3.5 : 1.6);
+        if (pl.giant) { sfx.merge(); floatText(p.x, 2.6, p.z, '황금 대왕!', '#ffd23f'); if (!state.hints.giant) { state.hints.giant = true; toast(`${CROP[pl.crop].name}이(가) 황금빛으로 엄청 크게 자랐어요! ${tune.giant_mult}배 값에 팔려요`, '#fff3b0', 4); } }
+        events.push({ type: 'ripe', crop: pl.crop, giant: pl.giant });
+      }
     }
   });
   // helpers make goods or coins
@@ -1296,26 +1586,38 @@ function menuKeys() {
   const m = state.menu; if (!m) return;
   const list = uiButtons.filter(b => b.menuSel !== undefined);
   if (pressed('Escape') || pressed('Backspace') || pressed('KeyB') && m.type === 'shop' || pressed('KeyG') && m.type === 'gacha' || pressed('KeyC') && m.type === 'book') { state.menu = null; sfx.click(); return; }
-  if (m.type === 'shop' && (pressed('ArrowRight') || pressed('KeyD') || pressed('Tab'))) { m.tab = (m.tab + 1) % 4; m.sel = 0; m.confirm = null; sfx.click(); return; }
-  if (m.type === 'shop' && (pressed('ArrowLeft') || pressed('KeyA'))) { m.tab = (m.tab + 3) % 4; m.sel = 0; m.confirm = null; sfx.click(); return; }
+  if (m.type === 'shop' && (pressed('ArrowRight') || pressed('KeyD') || pressed('Tab'))) { m.tab = (m.tab + 1) % 5; m.sel = 0; m.page = 0; m.confirm = null; sfx.click(); return; }
+  if (m.type === 'shop' && (pressed('ArrowLeft') || pressed('KeyA'))) { m.tab = (m.tab + 4) % 5; m.sel = 0; m.page = 0; m.confirm = null; sfx.click(); return; }
   if (m.type === 'gacha' && (pressed('ArrowRight') || pressed('KeyD'))) m.sel = 1;
   if (m.type === 'gacha' && (pressed('ArrowLeft') || pressed('KeyA'))) m.sel = 0;
   if (pressed('ArrowDown') || pressed('KeyS')) m.sel = Math.min(m.sel + 1, Math.max(0, list.length - 1));
   if (pressed('ArrowUp') || pressed('KeyW')) m.sel = Math.max(0, m.sel - 1);
   if (pressed('Space') || pressed('Enter')) { const b = list.find(b => b.menuSel === m.sel); if (b) b.act(); }
 }
+// one page of a list that may not fit: returns the slice to draw and adds 이전/다음 buttons
+function pageOf(m, list, perPage, px, pw, y) {
+  const pages = Math.max(1, Math.ceil(list.length / perPage)); m.page = Math.min(m.page || 0, pages - 1);
+  if (pages > 1) {
+    button(px + pw - 250, y, 100, 36, '이전', () => { m.page = Math.max(0, m.page - 1); m.sel = 0; sfx.click(); }, { size: 17, enabled: m.page > 0, color: '#e9e2cf' });
+    text(`${m.page + 1}/${pages}`, px + pw - 130, y + 18, 17, '#6a5a44');
+    button(px + pw - 110, y, 90, 36, '다음', () => { m.page = Math.min(pages - 1, m.page + 1); m.sel = 0; sfx.click(); }, { size: 17, enabled: m.page < pages - 1, color: '#e9e2cf' });
+  }
+  return list.slice(m.page * perPage, m.page * perPage + perPage);
+}
 function drawShop(m, px, py, pw, ph) {
-  const tabs = ['팔기', '씨앗', '농장', '친구'];
-  const tw = (pw - 40) / 4;
-  tabs.forEach((tb, i) => button(px + 20 + i * tw, py + 70, tw - 8, 50, tb, () => { m.tab = i; m.sel = 0; m.confirm = null; sfx.click(); }, { color: m.tab === i ? '#ffd56a' : '#e9e2cf', size: 22 }));
-  let y = py + 140, k = 0;
-  const rowH = 58, left = px + 30, right = px + pw - 30;
+  const tabs = ['팔기', '씨앗', '도구', '농장', '친구'];
+  const tw = (pw - 40) / tabs.length;
+  tabs.forEach((tb, i) => button(px + 20 + i * tw, py + 70, tw - 8, 50, tb, () => { m.tab = i; m.sel = 0; m.page = 0; m.confirm = null; sfx.click(); }, { color: m.tab === i ? '#ffd56a' : '#e9e2cf', size: 22 }));
+  let y = py + 134, k = 0;
+  const rowH = 54, left = px + 30, right = px + pw - 30, perPage = Math.max(1, Math.floor((ph - 210) / rowH));
   if (m.tab === 0) {
     const have = [];
     for (const c of CROPS) if (state.crops[c.id]) have.push(['c:' + c.id, `${c.name} ${state.crops[c.id]}개`, state.crops[c.id] * cropPrice(c.id)]);
+    for (const c of CROPS) if (state.gold[c.id]) have.push(['gc:' + c.id, `황금 대왕 ${c.name} ${state.gold[c.id]}개`, state.gold[c.id] * giantPrice(c.id)]);
     for (const g of Object.keys(state.goods)) if (state.goods[g][0]) have.push(['g:' + g, `${GOODS[g]} ${state.goods[g][0]}개`, state.goods[g][1]]);
     if (!have.length) text('팔 것이 없어요. 밭에서 수확하고, 친구가 만든 것을 주워 오세요.', px + pw / 2, y + 40, 20, '#6a5a44', 'center', 'normal');
     const maxRows = Math.max(1, Math.floor((ph - 300) / 50));
+    if (have.length > maxRows) text(`외 ${have.length - maxRows}가지`, left, y + maxRows * 50 + 10, 17, '#7a6a54', 'left', 'normal');
     have.slice(0, maxRows).forEach(([ic, label, v], i) => {
       icon(ic, left, y + i * 50, 44); text(label, left + 56, y + i * 50 + 22, 22, '#4a3a28', 'left');
       text(`${fmt(v)}코인`, right, y + i * 50 + 22, 22, '#b07a10', 'right');
@@ -1323,28 +1625,52 @@ function drawShop(m, px, py, pw, ph) {
     const total = have.reduce((a, h) => a + h[2], 0);
     button(px + pw / 2 - 170, py + ph - 140, 340, 64, total ? `모두 팔기 (+${fmt(total)})` : '모두 팔기', sellAll, { menuSel: k++, sel: m.sel === 0, enabled: total > 0, size: 26, color: total ? '#ffcf3a' : undefined });
   } else if (m.tab === 1) {
-    const maxRows = Math.max(1, Math.floor((ph - 230) / rowH));
-    CROPS.slice(0, maxRows).forEach((c, i) => {
+    pageOf(m, CROPS, perPage, px, pw, py + ph - 52).forEach((c, i) => {
       const yy = y + i * rowH;
       icon('s:' + c.id, left, yy, 48);
       text(`${c.name}  (${state.seeds[c.id]}개)`, left + 58, yy + 14, 21, '#4a3a28', 'left');
-      text(`${tune[c.id + '_grow']}초 · 팔면 ${fmt(cropPrice(c.id))}${c.id === 'strawberry' ? ` · ${tune.strawberry_harvests}번 수확` : ''}`, left + 58, yy + 38, 17, '#7a6a54', 'left', 'normal');
+      text(`${tune[c.id + '_grow']}초 · 팔면 ${fmt(cropPrice(c.id))} · 황금 ${fmt(giantPrice(c.id))}${c.id === 'strawberry' ? ` · ${tune.strawberry_harvests}번 수확` : ''}`, left + 58, yy + 38, 16, '#7a6a54', 'left', 'normal');
       const cost = tune[c.id + '_cost'];
       const bw = Math.min(150, (pw - 380) / 2);
       button(right - bw * 2 - 10, yy + 2, bw, 48, `1개 ${fmt(cost)}`, () => buySeed(c.id, 1), { menuSel: k, sel: m.sel === k++, enabled: state.coins >= cost, size: 19 });
       button(right - bw, yy + 2, bw, 48, `5개 ${fmt(cost * 5)}`, () => buySeed(c.id, 5), { menuSel: k, sel: m.sel === k++, enabled: state.coins >= cost * 5, size: 19 });
     });
   } else if (m.tab === 2) {
-    const full = state.rows >= tune.field_max_rows, pfull = state.pads.length >= tune.pads_max;
-    text(`밭: ${state.plots.length}칸`, left, y + 24, 22, '#4a3a28', 'left');
-    button(right - 300, y, 300, 52, full ? '최대예요' : `밭 넓히기 ${fmt(rowCost())}`, buyRow, { menuSel: k, sel: m.sel === k++, enabled: !full && state.coins >= rowCost(), size: 21 });
-    text(`친구 자리: ${state.pads.length}개`, left, y + 24 + 76, 22, '#4a3a28', 'left');
-    button(right - 300, y + 76, 300, 52, pfull ? '최대예요' : `자리 늘리기 ${fmt(padCost())}`, buyPad, { menuSel: k, sel: m.sel === k++, enabled: !pfull && state.coins >= padCost(), size: 21 });
+    const rows = TOOLS.map(t => ['t', t]).concat(SPRINKLERS.map(t => ['p', t]));
+    pageOf(m, rows, perPage, px, pw, py + ph - 52).forEach(([kind, t], i) => {
+      const yy = y + i * rowH;
+      icon((kind === 't' ? 't:' : 'p:') + t.id, left, yy, 48);
+      const bw = Math.min(220, pw - 420);
+      if (kind === 't') {
+        const own = state.tools[t.id], held = state.equip === t.id;
+        text(`${t.name}${held ? ' (손에 듦)' : own ? ' (가방)' : ''}`, left + 58, yy + 14, 21, '#4a3a28', 'left');
+        text(`손에 들면: ${t.what()}`, left + 58, yy + 38, 16, '#7a6a54', 'left', 'normal');
+        button(right - bw, yy + 2, bw, 46, held ? '들고 있어요' : own ? '손에 들기' : `사기 ${fmt(tune[t.id + '_cost'])}`, () => buyTool(t.id), { menuSel: k, sel: m.sel === k++, enabled: !held && (own || state.coins >= tune[t.id + '_cost']), size: 19 });
+      } else {
+        text(`${t.name}  (가방 ${state.items[t.id]}개 · 설치 ${state.sprinklers.filter(sp => sp.k === t.id).length}개)`, left + 58, yy + 14, 21, '#4a3a28', 'left');
+        text(`땅에 놓으면: 주변 ${tune[t.id + '_radius']}칸 성장 +${Math.round(tune[t.id + '_value'] * 100)}%`, left + 58, yy + 38, 16, '#7a6a54', 'left', 'normal');
+        button(right - bw, yy + 2, bw, 46, `사기 ${fmt(tune[t.id + '_cost'])}`, () => buySprinkler(t.id), { menuSel: k, sel: m.sel === k++, enabled: state.coins >= tune[t.id + '_cost'], size: 19 });
+      }
+    });
+  } else if (m.tab === 3) {
+    const rfull = state.rows >= tune.field_max_rows, cfull = state.cols >= tune.field_max_cols, pfull = state.pads.length >= tune.pads_max, wfull = state.workers.length >= tune.workers_max;
+    const rows = [
+      [`밭 아래로 넓히기 (${state.cols}×${state.rows}칸)`, `한 줄 ${state.cols}칸 추가 · 최대 ${tune.field_max_rows}줄`, rfull ? '최대예요' : `${fmt(rowCost())}`, buyRow, !rfull && state.coins >= rowCost()],
+      [`밭 옆으로 넓히기`, `한 열 ${state.rows}칸 추가 · 최대 ${tune.field_max_cols}열`, cfull ? '최대예요' : `${fmt(colCost())}`, buyCol, !cfull && state.coins >= colCost()],
+      [`친구 자리 (${state.pads.length}개)`, `돌판 하나 추가 · 최대 ${tune.pads_max}개`, pfull ? '최대예요' : `${fmt(padCost())}`, buyPad, !pfull && state.coins >= padCost()],
+      [`일꾼 고용 (${state.workers.length}명)`, '씨앗이 있으면 알아서 심고, 수확해서 팔아 줘요', wfull ? '최대예요' : `${fmt(workerCost())}`, hireWorker, !wfull && state.coins >= workerCost()],
+    ];
+    rows.forEach(([a, b, c, fn, en], i) => {
+      const yy = y + i * (rowH + 14);
+      if (i === 3) icon('w:hand', left - 4, yy - 2, 50);
+      text(a, left + (i === 3 ? 54 : 0), yy + 14, 21, '#4a3a28', 'left');
+      text(b, left + (i === 3 ? 54 : 0), yy + 38, 16, '#7a6a54', 'left', 'normal');
+      button(right - 200, yy + 2, 200, 48, c, fn, { menuSel: k, sel: m.sel === k++, enabled: en, size: 20 });
+    });
   } else {
     const owned = HELPERS.filter(h => state.helpers[h.id]);
     if (!owned.length) text('아직 친구가 없어요. 뽑기 기계에서 뽑아 보세요!', px + pw / 2, y + 40, 20, '#6a5a44', 'center', 'normal');
-    const maxRows = Math.max(1, Math.floor((ph - 230) / rowH));
-    owned.slice(0, maxRows).forEach((h, i) => {
+    pageOf(m, owned, perPage, px, pw, py + ph - 52).forEach((h, i) => {
       const yy = y + i * rowH, o = state.helpers[h.id];
       icon('h:' + h.id, left, yy, 48);
       text(`${h.name} ★${o.star}`, left + 58, yy + 14, 21, '#4a3a28', 'left');
@@ -1400,7 +1726,7 @@ function drawBook(m, px, py, pw, ph) {
 function drawMenu() {
   const m = state.menu; if (!m) return;
   ctx.fillStyle = 'rgba(30,50,40,0.35)'; ctx.fillRect(0, 0, W, H);
-  const pw = Math.min(W - 40, 880), ph = Math.min(H - 40, m.type === 'gacha' ? 470 : 600);
+  const pw = Math.min(W - 40, 900), ph = Math.min(H - 40, m.type === 'gacha' ? 470 : 640);
   const px = (W - pw) / 2, py = (H - ph) / 2;
   panel(px, py, pw, ph, '#fff8ea', m.type === 'gacha' ? '#e0508a' : '#8a6a3a');
   const titles = { shop: '가게', gacha: '뽑기 기계', book: '도감' };
@@ -1426,12 +1752,11 @@ const ACTION = () => ({ x: W - 130, y: H - 150, r: 78 });
 function inActionButton(x, y) { const a = ACTION(); return Math.hypot(x - a.x, y - a.y) < a.r + 10; }
 function drawHUD(dt) {
   // coins
-  shownCoins += (state.coins - shownCoins) * Math.min(1, dt * 8); if (Math.abs(state.coins - shownCoins) < 0.5) shownCoins = state.coins;
   panel(16, 16, 250, 64, '#fff8ea', '#c99a3a', 20);
   icon('g:coin', 22, 18, 58);
   text(fmt(shownCoins), 84, 49, 30, '#9a6a08', 'left');
   // bag summary
-  const cropN = CROPS.reduce((a, c) => a + state.crops[c.id], 0), goodN = Object.values(state.goods).reduce((a, g) => a + g[0], 0);
+  const cropN = CROPS.reduce((a, c) => a + state.crops[c.id] + state.gold[c.id], 0), goodN = Object.values(state.goods).reduce((a, g) => a + g[0], 0);
   if (cropN + goodN > 0) {
     panel(16, 90, 250, 46, '#f3fbe8', '#7aa85a', 16);
     text(`가방: 작물 ${cropN} · 물건 ${goodN}`, 30, 114, 19, '#3a5a2a', 'left');
@@ -1445,11 +1770,25 @@ function drawHUD(dt) {
     button(W - bw * 3 - 36, 82, bw, bh, '가게', () => { if (!state.reveal) openMenu('shop'); }, { size: 20, color: '#e3f7ef' });
     button(W - bw * 2 - 26, 82, bw, bh, '뽑기', () => { if (!state.reveal) openMenu('gacha'); }, { size: 20, color: '#ffe3ef' });
   }
-  // hotbar
-  const items = hotbarItems(), slot = 74, gap = 8;
-  const hbw = Math.max(1, items.length) * (slot + gap) - gap;
-  let hx = (W - hbw) / 2; const hy = H - slot - 18;
-  if (touchMode && hx + hbw > W - 230) hx = Math.max(230, W - 230 - hbw);
+  // hotbar: the tool in hand first, then seeds, helpers and sprinklers
+  const items = hotbarItems(), gap = 8, n = Math.max(1, items.length) + 1;
+  let slot = Math.min(74, Math.floor((W - 40) / n) - gap);
+  let hbw = n * (slot + gap) - gap, hx = (W - hbw) / 2, hy = H - slot - 18;
+  if (touchMode) { // keep clear of the joystick and the action button
+    const room = W - 470;
+    if (n * (Math.min(74, slot) + gap) - gap <= room) { hx = 235 + (room - hbw) / 2; }
+    else { slot = Math.min(64, slot); hbw = n * (slot + gap) - gap; hx = (W - hbw) / 2; hy = H - 250 - slot; }
+  }
+  { // tool slot
+    const x = hx, eq = state.equip;
+    uiButtons.push({ x, y: hy, w: slot, h: slot, act: () => cycleTool() });
+    ctx.fillStyle = 'rgba(40,60,30,0.3)'; rr(x + 2, hy + 4, slot, slot, 14); ctx.fill();
+    ctx.fillStyle = eq ? '#e6f7ff' : '#f0ece2'; rr(x, hy, slot, slot, 14); ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#4a8aaa'; rr(x, hy, slot, slot, 14); ctx.stroke();
+    if (eq) icon('t:' + eq, x + 6, hy + 2, slot - 12); else text('빈손', x + slot / 2, hy + slot / 2 - 6, Math.max(14, slot * 0.22), '#6a7a80');
+    textOutlined(touchMode ? '도구' : 'T 도구', x + slot / 2, hy + slot - 10, 14, '#ffffff', 'center', '#2a5a70');
+    hx += slot + gap;
+  }
   if (!items.length) {
     panel(W / 2 - 170, hy + 10, 340, 54, '#fff8ea', '#a08a5a', 16);
     text('씨앗이 없어요: 가게에서 사요', W / 2, hy + 37, 19, '#6a5a44');
@@ -1460,10 +1799,10 @@ function drawHUD(dt) {
     ctx.fillStyle = 'rgba(40,60,30,0.3)'; rr(x + 2, hy + 4, slot, slot, 14); ctx.fill();
     ctx.fillStyle = on ? '#fff3b0' : '#fff8ea'; rr(x, hy, slot, slot, 14); ctx.fill();
     ctx.lineWidth = on ? 5 : 3; ctx.strokeStyle = it.type === 'helper' ? tierColor(HELPER[it.id].tier, state.t) : (on ? '#ff9a2a' : '#a08a5a'); rr(x, hy, slot, slot, 14); ctx.stroke();
-    icon((it.type === 'seed' ? 's:' : 'h:') + it.id, x + 8, hy + 4, slot - 16);
-    const n = it.type === 'seed' ? `${state.seeds[it.id]}` : `★${state.helpers[it.id].star}`;
-    textOutlined(n, x + slot - 8, hy + slot - 14, 18, '#ffffff', 'right');
-    if (!touchMode) textOutlined(`${i + 1}`, x + 12, hy + 14, 15, '#ffffff', 'center');
+    icon(({ seed: 's:', helper: 'h:', spr: 'p:' })[it.type] + it.id, x + 8, hy + 4, slot - 16);
+    const cnt = it.type === 'seed' ? `${state.seeds[it.id]}` : it.type === 'spr' ? `${state.items[it.id]}` : `★${state.helpers[it.id].star}`;
+    textOutlined(cnt, x + slot - 8, hy + slot - 14, 18, '#ffffff', 'right');
+    if (!touchMode) textOutlined(`${(i + 1) % 10}`, x + 12, hy + 14, 15, '#ffffff', 'center');
   });
   // action prompt
   const t = state.reveal || state.menu ? null : targetNear();
@@ -1585,7 +1924,8 @@ const scenes = {
         tapsNow.forEach(t => t.b.act());
         if (state.menu) { /* a tap opened a menu */ }
         else {
-          for (let i = 0; i < 8; i++) if (pressed('Digit' + (i + 1))) { state.sel = i; sfx.click(); }
+          for (let i = 0; i < 10; i++) if (pressed('Digit' + ((i + 1) % 10))) { state.sel = i; sfx.click(); }
+          if (pressed('KeyT')) cycleTool();
           if (pressed('Space') || pressed('Enter')) act();
           else if (pressed('KeyB')) openMenu('shop');
           else if (pressed('KeyG')) openMenu('gacha');
@@ -1597,6 +1937,7 @@ const scenes = {
       if (state.sale) { state.sale.t += dt; if (state.sale.t > 2.6 + state.sale.lines.length * 0.12) state.sale = null; }
       updateFarm(dt);
       state.score = state.coins;
+      shownCoins += (state.coins - shownCoins) * Math.min(1, dt * 8); if (Math.abs(state.coins - shownCoins) < 0.5) shownCoins = state.coins;
       for (const f of floats) f.t += dt; while (floats.length && floats[0].t > 1.3) floats.shift();
       for (const t of toasts) t.t += dt; while (toasts.length && toasts[0].t > toasts[0].hold) toasts.shift();
       saveTimer += dt; if (saveTimer > 5) { saveTimer = 0; save(); }
@@ -1680,7 +2021,17 @@ function animateWorld(dt) {
   const sw = p.moving ? Math.sin(p.walk) * 0.7 : 0;
   u.legL.rotation.x = sw; u.legR.rotation.x = -sw; u.armL.rotation.x = -sw * 0.8; u.armR.rotation.x = sw * 0.8;
   player.position.y = p.moving ? Math.abs(Math.cos(p.walk)) * 0.08 : 0;
-  syncPlots(t); syncPads(t);
+  syncPlots(t); syncPads(t); syncSprinklers(t); syncWorkers(dt);
+  if (handTool !== (state.equip || '')) {
+    handTool = state.equip || ''; u.hand.clear();
+    if (handTool) { const tm = makeTool(handTool); tm.scale.setScalar(0.7); tm.rotation.x = handTool === 'can' ? 0 : Math.PI / 2; u.hand.add(tm); }
+  }
+  if (state.equip) u.armR.rotation.x = -0.5 + sw * 0.3;
+  canRing.visible = state.equip === 'can';
+  if (canRing.visible) {
+    canRing.position.set(p.x, 0.05, p.z); canRing.scale.setScalar(tune.can_radius); canRing.material.opacity = 0.3 + 0.15 * Math.sin(t * 3);
+    if (crng() < 0.5) sparkle(p.x + Math.sin(p.rot) * 0.9 + (crng() - 0.5) * 0.3, 1.0, p.z + Math.cos(p.rot) * 0.9, '#6cd0ff', 0.2);
+  }
   // highlight
   const tg = scene === 'play' && !state.menu && !state.reveal ? targetNear() : null;
   highlight.visible = !!tg && (tg.kind === 'plot' || tg.kind === 'pad');
