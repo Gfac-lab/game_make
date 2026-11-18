@@ -36,7 +36,7 @@ const PIXEL = false;
 const FONT = '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","NanumGothic","WenQuanYi Zen Hei",sans-serif';
 const TITLE = '봄빛 뽑기 농장';
 const CONTROLS = [
-  '컴퓨터: WASD 걷기 · 마우스 드래그/Q·E 카메라 · 스페이스 행동 · 1–0 고르기 · T 도구 바꾸기 · B 가게 · G 뽑기 · C 도감 · P 일시정지 · M 소리',
+  '컴퓨터: WASD 걷기 · 마우스 드래그/Q·E 카메라 · 스페이스 행동 · 1–0 고르기 · T 도구 바꾸기 · B 가게 · G 뽑기 · C 도감 · P 일시정지 · M 소리 · F 전체화면',
   '태블릿: 왼쪽 조이스틱 걷기 · 오른쪽 드래그 카메라 · 큰 버튼 행동 · 아래 칸 탭으로 고르기 · 도구 칸 탭으로 바꾸기',
 ];
 const clock = window.GAME_CLOCK || { now: () => performance.now() / 1000 }; // a check may inject one
@@ -166,6 +166,7 @@ let touchMode = false;
 addEventListener('keydown', e => {
   startAudio();
   if (!e.repeat) { down.add(e.code); hit.add(e.code); }
+  if (e.code === 'KeyF' && !e.repeat) toggleFull(); // inside the keypress, as browsers require
   if (e.code === 'Space' || e.code.startsWith('Arrow') || e.code === 'Tab') e.preventDefault();
   if (touchMode && /^(Key|Arrow|Space|Digit)/.test(e.code)) touchMode = false;
 });
@@ -184,7 +185,7 @@ canvas.addEventListener('pointerdown', e => {
   const p = toLogical(e);
   try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
   const b = buttonAt(p.x, p.y);
-  if (b) { pointers.set(e.pointerId, { role: 'button', x: p.x, y: p.y }); taps.push({ b }); return; }
+  if (b) { pointers.set(e.pointerId, { role: 'button', x: p.x, y: p.y }); if (b.now) b.act(); else taps.push({ b }); return; } // fullscreen must run inside the tap
   if (touchMode && scene === 'play' && !state.menu && !state.reveal) {
     if (inActionButton(p.x, p.y)) { pointers.set(e.pointerId, { role: 'action' }); hit.add('Space'); return; }
     if (p.x < W * 0.45 && p.y > H * 0.35 && !joy.active) {
@@ -223,6 +224,20 @@ function startAudio() {
     if (audio.ac.state === 'suspended') audio.ac.resume();
   } catch (_) { /* no audio on this device */ }
 }
+// ---- Fullscreen: a button, F, and the pause menu; browsers that refuse it get a hint ----
+function isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function canFull() { const d = document.documentElement; return !!(d.requestFullscreen || d.webkitRequestFullscreen) && (document.fullscreenEnabled !== false || document.webkitFullscreenEnabled); }
+function toggleFull() {
+  const d = document.documentElement;
+  const hint = () => toast(navigator.standalone === false || /iP(hone|ad)/.test(navigator.userAgent) ? '이 브라우저는 전체화면을 막아요: 공유 → 홈 화면에 추가로 열면 전체화면이에요' : '이 브라우저는 전체화면을 막아요', '#fff6c8', 4);
+  try {
+    if (isFull()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+    if (!canFull()) { hint(); return; }
+    const r = (d.requestFullscreen || d.webkitRequestFullscreen).call(d, { navigationUI: 'hide' });
+    if (r && r.catch) r.catch(hint);
+  } catch (_) { hint(); }
+}
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => setTimeout(fit, 50)));
 function setMuted(m) { muted = m; if (audio) audio.out.gain.value = m ? 0 : tune.volume; }
 addEventListener('tune', () => setMuted(muted));
 function tone(freq, dur, type = 'triangle', vol = 0.25, delay = 0, slide = 0) {
@@ -1567,7 +1582,7 @@ function updateCamera(dt) {
 // ---- Menus: drawn on the HUD; every button works by tap, click, or keys -------------------
 let uiButtons = []; // rebuilt each draw: {x,y,w,h,act,id}
 function button(x, y, w, h, label, act, opts = {}) {
-  const b = { x, y, w, h, act, label, menuSel: opts.menuSel };
+  const b = { x, y, w, h, act, label, menuSel: opts.menuSel, now: act === toggleFull };
   uiButtons.push(b);
   const on = opts.sel, en = opts.enabled !== false;
   const base = opts.color || (en ? '#7fd36a' : '#c9c4b8');
@@ -1766,6 +1781,7 @@ function drawHUD(dt) {
   button(W - bw - 16, 16, bw, bh, '일시정지', () => { scene = 'pause'; state.menu = null; pauseSel = 0; sfx.click(); }, { size: 18, color: '#fff3d6' });
   button(W - bw * 2 - 26, 16, bw, bh, muted ? '소리 켜기' : '소리 끄기', () => { setMuted(!muted); }, { size: 18, color: '#fff3d6' });
   button(W - bw * 3 - 36, 16, bw, bh, '도감', () => openMenu('book'), { size: 20, color: '#ffe3ef' });
+  button(W - bw * 4 - 46, 16, bw, bh, isFull() ? '창 모드' : '전체화면', toggleFull, { size: 18, color: '#e6f7ff' });
   if (touchMode) {
     button(W - bw * 3 - 36, 82, bw, bh, '가게', () => { if (!state.reveal) openMenu('shop'); }, { size: 20, color: '#e3f7ef' });
     button(W - bw * 2 - 26, 82, bw, bh, '뽑기', () => { if (!state.reveal) openMenu('gacha'); }, { size: 20, color: '#ffe3ef' });
@@ -1906,6 +1922,7 @@ const scenes = {
       });
       ctx.restore();
       button(W / 2 - 150, py + ph - 76, 300, 62, hasSave() ? '이어하기' : '시작하기', startGame, { size: 28, color: '#ffcf3a', sel: true });
+      button(px + pw - 136, py + 16, 120, 48, isFull() ? '창 모드' : '전체화면', toggleFull, { size: 18, color: '#e6f7ff' });
       text('Enter 또는 탭해서 시작', W / 2, py + ph + 26, 18, '#ffffff');
     },
   },
@@ -1956,7 +1973,7 @@ const scenes = {
     update() {
       const tapsNow = taps; taps = [];
       if (pressed('KeyP') || pressed('Escape')) { scene = 'play'; return; }
-      if (pressed('ArrowDown') || pressed('KeyS')) pauseSel = Math.min(2, pauseSel + 1);
+      if (pressed('ArrowDown') || pressed('KeyS')) pauseSel = Math.min(3, pauseSel + 1);
       if (pressed('ArrowUp') || pressed('KeyW')) pauseSel = Math.max(0, pauseSel - 1);
       const acts = pauseActs();
       if (pressed('Space') || pressed('Enter')) acts[pauseSel]();
@@ -1966,11 +1983,11 @@ const scenes = {
       placeCamera(0); renderer.render(world, camera);
       ctx.clearRect(0, 0, W, H); uiButtons = [];
       ctx.fillStyle = 'rgba(30,50,40,0.4)'; ctx.fillRect(0, 0, W, H);
-      const pw = Math.min(W - 40, 460), ph = 360, px = (W - pw) / 2, py = (H - ph) / 2;
+      const pw = Math.min(W - 40, 460), ph = 440, px = (W - pw) / 2, py = (H - ph) / 2;
       panel(px, py, pw, ph, '#fff8ea', '#8a6a3a');
       textOutlined('잠깐 쉬는 중', W / 2, py + 44, 34, '#ffffff', 'center', '#7a5a2a');
-      const acts = pauseActs(), labels = ['계속하기', muted ? '소리 켜기' : '소리 끄기', resetConfirm ? '정말 처음부터? (농장이 지워져요)' : '처음부터 다시'];
-      labels.forEach((l, i) => button(px + 30, py + 94 + i * 80, pw - 60, 62, l, acts[i], { sel: pauseSel === i, size: i === 2 && resetConfirm ? 19 : 24, color: i === 2 ? (resetConfirm ? '#ff9a7a' : '#ffd6c8') : undefined }));
+      const acts = pauseActs(), labels = ['계속하기', muted ? '소리 켜기' : '소리 끄기', isFull() ? '창 모드로' : '전체화면', resetConfirm ? '정말 처음부터? (농장이 지워져요)' : '처음부터 다시'];
+      labels.forEach((l, i) => button(px + 30, py + 94 + i * 80, pw - 60, 62, l, acts[i], { sel: pauseSel === i, size: i === 3 && resetConfirm ? 19 : 24, color: i === 3 ? (resetConfirm ? '#ff9a7a' : '#ffd6c8') : undefined }));
     },
   },
 };
@@ -1978,6 +1995,7 @@ function pauseActs() {
   return [
     () => { scene = 'play'; sfx.click(); },
     () => setMuted(!muted),
+    toggleFull,
     () => {
       if (!resetConfirm) { resetConfirm = true; sfx.click(); return; }
       try { localStorage.removeItem(SAVE_KEY); } catch (_) {}
