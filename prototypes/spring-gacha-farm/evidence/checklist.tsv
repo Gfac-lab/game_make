@@ -1,0 +1,26 @@
+L1	pass	evidence/play.png	rounded-block low-poly 3D, green grass, brown soil, sky blue, pink cherry trees and petals; tier-coloured aura rings and sparkles (index.html:824), gacha beam in tier colour (index.html:1705); renderer pixel ratio capped at 1.5 for tablets; HUD fits any window (index.html:103)
+L2	pass	evidence/figures.png	blocky Roblox-garden-like look in our own figures; no name, art, characters or UI taken (evidence/nearest-game.txt)
+L3	pass	evidence/play.png	3D, third-person camera behind and above the farmer, turned by drag or Q/E (index.html:1667)
+F1	pass	evidence/play.png	blocky farmer walks the spring farm in third person (index.html:318)
+F2	pass	index.html:764	plant → mound, sprout, leaves, ripe produce models for 5 crops; play.png shows sprouts after Space
+F3	pass	index.html:1307	shop tabs: sell all crops/goods, buy seeds, expand farm, sell helpers; not opened in a shot
+F4	pass	index.html:1129	8 tiers with weight tables in config.js, odds panel, capsule shake, crank, tier-colour beam and reveal (index.html:1705)
+F5	pass	evidence/figures.png	12 helpers, each its own silhouette and ability (lay, coin, grow, double, sell, all)
+F6	pass	index.html:1147	a duplicate pull merges: star +1, power x(1+star_bonus·(star−1))
+F7	pass	index.html:1427	도감 menu (index.html:1379), autosave to localStorage (index.html:951), field rows and pads expand (index.html:1182)
+F8	not_assessed	index.html:175	joystick, action button (index.html:1426), hotbar taps, drag camera built; no check plays touch
+S1	pass	index.html:1207	crops grow on their own and sell in the shop (index.html:1168)
+S2	pass	index.html:990	pull paid in coins, price rising with each pull
+S3	pass	index.html:62	일반·에픽·희귀·전설·시크릿·신·신을 낳은 신·레전드 오브 레전드, in your order
+S4	pass	index.html:1147	same helper merges and gets stronger
+S5	pass	index.html:1168	sell crops/goods/helpers for coins, buy seeds (index.html:1177)
+S6	pass	index.html:1214	chicken lays eggs; tulip, cherry, unicorn speed nearby crops (index.html:975)
+M1	pass	evidence/play.png	starts on the spring farm by the field
+M2	pass	index.html:942	2 rows × 3 = 6 plots, 3 carrot seeds (index.html:932)
+M3	pass	evidence/play.png	Space in front of the field planted carrots; stages are visible as they grow (index.html:759)
+M4	pass	index.html:1168	harvest goes to the bag, selling counts up the coins line by line
+M5	pass	index.html:1134	first pull is the chicken; arrow bounces over the machine and a toast calls when a pull is affordable (index.html:1691, index.html:1236)
+M6	pass	index.html:1214	a placed chicken lays an egg every 10 s; walking over picks it up (index.html:1229) and it sells in the shop
+C1	pass	index.html:1207	crops never die; no fail state
+C2	pass	index.html:990	limited plots and pads, pull price rises, top tiers rare (config.js weights)
+C3	not_assessed	index.html:1358	golden pull, expansions and sell-vs-merge choice are built; when the first choice lands (3–5 min) needs a real play
